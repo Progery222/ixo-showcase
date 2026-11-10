@@ -1,0 +1,1212 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body><title>iXo Carousels</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a dark iXo catalogue. Sticky control bar with the branch index, then one chapter per
+   branch; inside it one band per theme: reasoning on the left, the real slides on the right in
+   two styles (with a hero, text only). Any slide opens full screen. Single dark look on purpose:
+   it is iXo's own site palette, and the slides themselves carry the light/dark switch. */
+:root{
+  --bg:#111111;        /* iXo background */
+  --panel:#1c1c1c;     /* iXo panels */
+  --line:#2a2a28;      /* hairlines, warm grey toward the accent */
+  --fg:#f1f1ef;        /* iXo text */
+  --fg2:#b4b3ad;       /* secondary text */
+  --fg3:#7d7c76;       /* captions */
+  --accent:#ffd705;    /* iXo yellow: only for the active state and the iXo voice */
+  --on-accent:#111111;
+  --display:"Inter Tight",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--display);font-size:16px;line-height:1.5;
+     -webkit-font-smoothing:antialiased;margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+button{font:inherit;color:inherit}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px}
+.wrap{max-width:1360px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* Control bar */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:rgba(17,17,17,.92);
+     backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.bar .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding-block:12px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;margin-right:auto;white-space:nowrap}
+.brand img{height:22px;width:auto}
+.seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px}
+.seg button{border:0;background:transparent;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:500;color:var(--fg2);cursor:pointer;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.nav{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-block:0 12px}
+.nav::-webkit-scrollbar{display:none}
+.nav a{flex:none;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13px;color:var(--fg2);white-space:nowrap}
+.nav a:hover{border-color:var(--fg3);color:var(--fg)}
+.nav a.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
+.nav .n{opacity:.6;margin-left:6px;font-variant-numeric:tabular-nums}
+
+/* Intro */
+.intro{padding-block:56px 40px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:40px;align-items:end}
+.intro h1{font-size:clamp(36px,5.4vw,72px);line-height:1;letter-spacing:-.035em;margin:0;font-weight:700;text-wrap:balance}
+.intro h1 b{color:var(--accent);font-weight:700}
+.intro p{color:var(--fg2);font-size:17px;max-width:56ch;margin:20px 0 0}
+.rules{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.rules li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:12px;align-items:start;color:var(--fg2);font-size:15px}
+.rules li::before{content:"";width:12px;height:12px;border-radius:50%;margin-top:6px;background:var(--fg3)}
+.rules li.y::before{background:var(--accent)}
+.note{color:var(--fg3);font-size:13px;margin-top:6px}
+
+/* Branch chapters */
+.branch{scroll-margin-top:110px;padding-top:24px}
+.bhead{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:32px;align-items:end;padding-block:28px 20px;border-top:2px solid var(--fg)}
+.bhead .k{font-size:13px;color:var(--fg3);font-variant-numeric:tabular-nums}
+.bhead h2{font-size:clamp(30px,3.6vw,48px);line-height:1;letter-spacing:-.03em;margin:6px 0 0;text-wrap:balance}
+.bhead p{margin:0;color:var(--fg2);font-size:16px;max-width:60ch}
+
+/* Theme bands */
+.theme{border-top:1px solid var(--line);padding-block:28px;display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:32px;scroll-margin-top:110px}
+.meta h3{font-size:28px;line-height:1.05;letter-spacing:-.025em;margin:10px 0 12px;text-wrap:balance}
+.pill{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--fg2);
+      border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.meta .why{color:var(--fg2);font-size:15px;margin:0}
+.meta .ixo{margin:14px 0 0;font-size:14px;color:var(--fg);padding-left:14px;border-left:2px solid var(--accent)}
+.strips{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;min-width:0}
+.strips > div{min-width:0}
+.cap{font-size:12px;font-weight:600;color:var(--fg3);margin:0 0 8px;display:flex;gap:8px}
+.cap span{font-weight:400;font-variant-numeric:tabular-nums}
+.strip{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:10px;min-width:0;
+       scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.frame{--w:200px;flex:none;width:var(--w);aspect-ratio:9/16;border-radius:14px;overflow:hidden;position:relative;
+       background:var(--panel);scroll-snap-align:start;cursor:zoom-in;border:0;padding:0;max-width:100%;transition:transform .2s ease}
+.frame:hover{transform:translateY(-3px)}
+.ig .frame{aspect-ratio:4/5;--w:240px}
+.both .frame{--w:168px}
+.both.ig .frame{--w:208px}
+/* --k scales a 1080px slide to its frame: --w / 1080. Set here so the page also works with
+   scripts off (iPhone previews); fit() then sets the measured value on body. */
+body{--k:.18519} body.ig{--k:.22222} body.both{--k:.15556} body.both.ig{--k:.19259}
+.frame > .slide,.frame > .ts,.vframe > .slide,.vframe > .ts{position:absolute;left:0;top:0;transform:scale(var(--k));transform-origin:0 0;pointer-events:none}
+.frame .num{position:absolute;right:8px;bottom:8px;font-size:11px;font-weight:600;background:rgba(17,17,17,.7);
+            color:#f1f1ef;padding:2px 7px;border-radius:999px;font-variant-numeric:tabular-nums}
+
+/* Full-screen viewer */
+.viewer{position:fixed;inset:0;z-index:50;background:rgba(10,10,10,.97);display:grid;
+        grid-template-rows:auto minmax(0,1fr) auto;padding:calc(12px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.viewer[hidden]{display:none!important}
+.vtop{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--fg2)}
+.vtop b{color:var(--fg);font-weight:600}
+.vtop .x{margin-left:auto}
+.ibtn{border:1px solid var(--line);background:var(--panel);border-radius:999px;width:44px;height:44px;display:grid;place-items:center;cursor:pointer;font-size:18px;flex:none}
+.stage{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:16px;min-height:0;padding-top:12px}
+.vframe{justify-self:center;height:100%;max-height:100%;aspect-ratio:9/16;max-width:100%;border-radius:18px;overflow:hidden;position:relative;background:var(--panel);touch-action:pan-y}
+.ig .vframe{aspect-ratio:4/5}
+.dots{display:flex;justify-content:center;gap:6px;padding-top:12px}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.dots i.on{background:var(--accent)}
+.foot{border-top:1px solid var(--line);margin-top:24px;padding-block:28px 48px;color:var(--fg3);font-size:13px}
+
+@media (max-width:860px){
+  .intro{grid-template-columns:minmax(0,1fr);padding-block:36px 24px;gap:24px}
+  .bhead,.theme{grid-template-columns:minmax(0,1fr);gap:14px}
+  .frame{--w:160px} .both .frame{--w:150px} .ig .frame{--w:200px} .both.ig .frame{--w:190px}
+  body{--k:.14815} body.both{--k:.13889} body.ig{--k:.18519} body.both.ig{--k:.17593}
+  .stage{grid-template-columns:minmax(0,1fr)}
+  .stage .ibtn{display:none}
+}
+@media (max-width:600px){
+  .bar .wrap{gap:8px;padding-block:8px}
+  .brand span,.seg .wide{display:none}
+  .seg button{padding:5px 9px;font-size:12px}
+  .nav{padding-block:0 8px}
+  .nav a{font-size:12px;padding:4px 10px}
+}
+@media (prefers-reduced-motion:reduce){.frame{transition:none}.frame:hover{transform:none}}
+
+/* iXo photo slides. One slide is 1080x1920 (TikTok) or 1080x1350 (.ig, Instagram 4:5), drawn at
+   full size and scaled by whoever shows it. Text stays out of the TikTok UI zones:
+   top 150, bottom 400, right 140. .light is the light theme, .fx turns on the glass blur. */
+.slide{
+  --ink:#111111;      /* brand background */
+  --paper:#f1f1ef;    /* brand text */
+  --yolk:#ffd705;     /* brand accent: the voice of iXo */
+  --fg:var(--paper); --fg2:rgba(241,241,239,.84); --fg3:rgba(241,241,239,.66);
+  --glass:rgba(26,26,26,.72); --edge:rgba(255,255,255,.10); --rule:rgba(255,255,255,.08);
+  --chip:rgba(241,241,239,.12); --on-bg:var(--paper); --on-fg:var(--ink);
+  --scrim:linear-gradient(180deg,rgba(0,0,0,.42) 0,rgba(0,0,0,0) 13%,rgba(0,0,0,0) 40%,
+          rgba(12,12,12,.72) 60%,rgba(12,12,12,.86) 78%,rgba(12,12,12,.82) 100%);
+  --bottom:430px; --mark-top:170px; --sheet-top:930px;
+  position:relative;width:1080px;height:1920px;overflow:hidden;background:var(--ink);color:var(--fg);
+  font-family:"Inter Tight",system-ui,sans-serif;-webkit-font-smoothing:antialiased;text-align:left;
+}
+.slide *{box-sizing:border-box;margin:0;padding:0}
+.slide.ig{height:1350px;--bottom:120px;--mark-top:72px;--sheet-top:640px}
+.slide.light{
+  --fg:var(--ink); --fg2:rgba(17,17,17,.78); --fg3:rgba(17,17,17,.56);
+  --glass:rgba(241,241,239,.78); --edge:rgba(17,17,17,.08); --rule:rgba(17,17,17,.09);
+  --chip:rgba(17,17,17,.08); --on-bg:var(--ink); --on-fg:var(--paper);
+  --scrim:linear-gradient(180deg,rgba(0,0,0,.30) 0,rgba(0,0,0,0) 13%,rgba(241,241,239,0) 38%,
+          rgba(241,241,239,.80) 58%,rgba(241,241,239,.94) 74%,rgba(241,241,239,.96) 100%);
+}
+.slide .photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;max-width:none;
+  filter:saturate(.86) contrast(1.06) brightness(.97)}
+.slide div.photo{background-size:cover;background-repeat:no-repeat}
+.slide .mark.mk{background:center/contain no-repeat}
+.slide .dim{position:absolute;inset:0;background:rgba(10,10,10,var(--d))}
+.slide.light .dim{background:rgba(241,241,239,calc(var(--d) * .6))}
+.slide .scrim{position:absolute;inset:0;background:var(--scrim)}
+/* A panel lifts the headline into the photo, so the shade starts higher */
+.slide.tall{--scrim:linear-gradient(180deg,rgba(0,0,0,.42) 0,rgba(0,0,0,0) 12%,rgba(12,12,12,.10) 24%,
+          rgba(12,12,12,.74) 40%,rgba(12,12,12,.86) 62%,rgba(12,12,12,.82) 100%)}
+.slide.light.tall{--scrim:linear-gradient(180deg,rgba(0,0,0,.30) 0,rgba(0,0,0,0) 12%,rgba(241,241,239,.12) 24%,
+          rgba(241,241,239,.82) 40%,rgba(241,241,239,.94) 60%,rgba(241,241,239,.96) 100%)}
+.slide .grain{position:absolute;inset:0;opacity:.07;mix-blend-mode:overlay;pointer-events:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+/* iXo mark from ixo.chat/assets/ixo.svg, in its own yellow */
+.slide .mark{position:absolute;left:80px;top:var(--mark-top);width:91px;height:50px;filter:drop-shadow(0 2px 10px rgba(0,0,0,.45))}
+
+.slide .copy{position:absolute;left:80px;right:160px;bottom:var(--bottom)}
+.slide .label{font-size:38px;font-weight:600;letter-spacing:-.005em;color:var(--fg3);margin-bottom:26px}
+.slide h1{font-weight:700;font-size:118px;line-height:.98;letter-spacing:-.04em;text-wrap:balance}
+.slide h1.l{font-size:96px;line-height:1}                               /* long headline, keeps clear of the face */
+.slide h1.m{font-size:84px;line-height:1.02;letter-spacing:-.035em}   /* headline above a panel */
+.slide.ig h1{font-size:104px}
+.slide.ig h1.l{font-size:88px}
+.slide.ig h1.m{font-size:76px}
+.slide .sub{margin-top:38px;font-weight:450;font-size:44px;line-height:1.28;letter-spacing:-.01em;color:var(--fg2);max-width:780px}
+
+/* Glass panel: lists, options, bars, comparison */
+.slide .panel{margin-top:44px;padding:12px;border-radius:32px;background:var(--glass);border:1px solid var(--edge)}
+.slide.fx .panel,.slide.fx .tab,.slide.fx .me{backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+.slide .row{display:flex;align-items:center;gap:28px;padding:24px 28px;border-radius:22px;
+  font-size:44px;line-height:1.2;font-weight:500;letter-spacing:-.01em}
+.slide .row + .row{box-shadow:0 -1px 0 var(--rule)}
+.slide .row .k{flex:none;width:64px;height:64px;border-radius:20px;display:grid;place-items:center;
+  background:var(--chip);font-size:34px;font-weight:700}
+.slide .row.on{background:var(--on-bg);color:var(--on-fg);box-shadow:none}
+.slide .row.on + .row{box-shadow:none}
+.slide .row.on .k{background:rgba(128,128,128,.18)}
+.slide .bar{padding:22px 28px}
+.slide .bar + .bar{box-shadow:0 -1px 0 var(--rule)}
+.slide .bar .t{display:flex;justify-content:space-between;font-size:40px;font-weight:500;margin-bottom:16px}
+.slide .bar .track{height:16px;border-radius:8px;background:var(--chip)}
+.slide .bar .fill{height:100%;border-radius:8px;background:var(--fg);opacity:.86}
+.slide .bar.hot .fill{background:var(--yolk);opacity:1}
+.slide .bar.hot .t b{color:var(--yolk)}
+.slide.light .bar.hot .t b{color:var(--ink);background:var(--yolk);padding:0 12px;border-radius:10px}
+.slide .vs{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:44px}
+.slide .vs .panel{margin:0;padding:30px 30px 18px}
+.slide .vs h3{font-size:48px;font-weight:700;letter-spacing:-.02em;margin-bottom:14px}
+.slide .vs p{font-size:38px;line-height:1.2;padding:16px 0;box-shadow:0 -1px 0 var(--rule);color:var(--fg3)}
+.slide .vs p.on{color:var(--fg);font-weight:650}
+.slide .vs.all p{color:var(--fg2)}
+
+/* Open tabs */
+.slide .tabs{position:absolute;left:80px;right:140px;top:290px}
+.slide.ig .tabs{top:170px}
+.slide .tab{position:absolute;display:flex;align-items:center;gap:26px;height:96px;padding:0 34px 0 38px;
+  border-radius:28px;background:var(--glass);border:1px solid var(--edge);
+  font-size:40px;font-weight:500;letter-spacing:-.01em;white-space:nowrap;box-shadow:0 18px 40px rgba(0,0,0,.28)}
+.slide.ig .tab{height:80px;font-size:36px;border-radius:24px}
+.slide .tab i{font-style:normal;opacity:.45;font-weight:400}
+.slide .tab.more{background:var(--on-bg);color:var(--on-fg);border-color:transparent}
+
+/* Conversation: the person in glass, iXo in yellow */
+.slide .chat{position:absolute;left:80px;right:140px;bottom:var(--bottom);display:flex;flex-direction:column;gap:34px}
+.slide .msg{max-width:760px;padding:36px 42px;font-size:48px;line-height:1.26;letter-spacing:-.01em;border-radius:40px}
+.slide .me{align-self:flex-end;background:var(--glass);border:1px solid var(--edge);border-bottom-right-radius:12px}
+.slide .ixo{align-self:flex-start;background:var(--yolk);color:var(--ink);font-weight:550;border-bottom-left-radius:12px}
+.slide .who{font-size:30px;font-weight:600;letter-spacing:0;margin-bottom:12px;opacity:.55}
+
+/* Final: the photo stays full-bleed, iXo answers on a yellow sheet; content must end above y=1520 */
+.slide .sheet{position:absolute;left:0;right:0;top:var(--sheet-top);bottom:0;padding:70px 80px 0;
+  background:var(--yolk);color:var(--ink);border-radius:48px 48px 0 0;display:flex;flex-direction:column;align-items:flex-start}
+.slide.ig .sheet{padding-top:56px}
+.slide .sheet h1{font-size:100px;max-width:880px}
+.slide.ig .sheet h1{font-size:84px}
+.slide .sheet .sub{color:rgba(17,17,17,.78);max-width:800px}
+.slide.ig .sheet .sub{margin-top:28px}
+.slide .cta{display:flex;align-items:center;gap:22px;margin-top:48px;height:112px;padding:0 48px;border-radius:56px;
+  background:var(--ink);color:var(--paper);font-size:42px;font-weight:600;letter-spacing:-.01em}
+.slide.ig .cta{margin-top:36px;height:100px}
+.slide .cta b{width:18px;height:18px;border-radius:50%;background:var(--yolk)}
+.slide.safe::after{content:"";position:absolute;inset:150px 140px 400px 0;outline:3px dashed rgba(255,0,80,.7)}
+
+/* Text-only iXo slides (the Mac mockup look), scoped under .ts so they live beside the photo slides.
+   1080x1350 (Instagram 4:5) by default, .tt is 1080x1920 TikTok with room for its interface. */
+.ts{--bg:#111;--panel:#1c1c1c;--raised:#242424;--line:#333;--ink:#f1f1ef;--muted:#aaa;--accent:#ffd705;--radius:32px;
+  width:1080px;height:1350px;background:var(--bg);color:var(--ink);padding:72px 80px;display:flex;flex-direction:column;
+  position:relative;overflow:hidden;font-family:"Inter Tight",Arial,sans-serif;text-align:left;-webkit-font-smoothing:antialiased}
+.ts *{box-sizing:border-box;margin:0}
+.ts.tt{height:1920px;padding:190px 150px 430px 80px}
+.ts header,.ts footer{display:flex;justify-content:space-between;align-items:center;font-size:30px;color:var(--muted)}
+.ts .logo{font-weight:700;font-size:44px;color:var(--ink);letter-spacing:-.04em}
+.ts .logo i{font-style:normal;color:var(--accent)}
+.ts main{flex:1;display:flex;flex-direction:column;justify-content:center;gap:40px}
+.ts .next{width:84px;height:84px;border-radius:50%;background:var(--accent);color:#111;display:grid;place-items:center;font-size:44px}
+.ts .kicker{font-size:32px;color:var(--accent);font-weight:500;letter-spacing:.02em;text-transform:uppercase}
+.ts .title{font-size:112px;line-height:1.02;font-weight:500;letter-spacing:-.035em;text-wrap:balance}
+.ts .title em{font-style:normal;color:var(--accent)}
+.ts .title.m{font-size:88px}
+.ts .title.l{font-size:92px}
+.ts .sub{font-size:44px;line-height:1.25;color:var(--muted);max-width:18em;text-wrap:pretty}
+.ts .num{font-size:220px;font-weight:500;letter-spacing:-.05em;line-height:.8;color:var(--raised);position:absolute;right:64px;top:170px}
+.ts.tt .num{right:150px;top:290px}
+.ts .chips{display:flex;flex-direction:column;gap:20px;align-items:flex-start}
+.ts .chip{font-size:46px;padding:28px 40px;border-radius:var(--radius);background:var(--panel);border:2px solid var(--line)}
+.ts .chip.on{background:var(--accent);color:#111;border-color:var(--accent);font-weight:500}
+.ts.glow::before{content:"";position:absolute;width:900px;height:900px;border-radius:50%;right:-380px;bottom:-420px;
+  background:radial-gradient(closest-side,rgba(255,215,5,.28),transparent)}
+.ts .bars{display:flex;flex-direction:column;gap:26px}
+.ts .bar{display:grid;grid-template-columns:270px 1fr 90px;align-items:center;gap:24px;font-size:40px}
+.ts .bar .track{height:36px;border-radius:18px;background:var(--panel);overflow:hidden}
+.ts .bar .fill{height:100%;border-radius:18px;background:var(--muted)}
+.ts .bar.hot .fill{background:var(--accent)}
+.ts .bar.hot{color:var(--accent)}
+.ts .bar b{font-weight:500;text-align:right}
+.ts .chaos{position:relative;height:760px}
+.ts .chaos span{position:absolute;font-size:40px;padding:22px 32px;border-radius:28px;background:var(--panel);border:2px solid var(--line);white-space:nowrap}
+.ts .bubble{font-size:44px;line-height:1.25;padding:36px 44px;border-radius:var(--radius);max-width:780px}
+.ts .bubble.me{align-self:flex-end;background:var(--raised)}
+.ts .bubble.ixo{background:var(--panel);border:2px solid var(--accent)}
+.ts .bubble small{display:block;font-size:28px;color:var(--accent);margin-bottom:10px;font-weight:600}
+.ts.cta{background:var(--accent);color:#111}
+.ts.cta header,.ts.cta footer,.ts.cta .logo,.ts.cta .sub{color:#111}
+.ts.cta .logo i{color:#111}
+.ts.cta .title em{color:#111;text-decoration:underline;text-decoration-thickness:6px;text-underline-offset:12px}
+.ts .vs{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.ts .vs>div{background:var(--panel);border:2px solid var(--line);border-radius:var(--radius);padding:44px 40px}
+.ts .vs h4{font-size:52px;font-weight:500;margin-bottom:28px;letter-spacing:-.02em}
+.ts .vs p{font-size:38px;line-height:1.2;padding:22px 0;border-top:2px solid var(--line)}
+.ts .vs p.on{color:var(--accent);font-weight:500}
+.ts.light{--bg:#f1f1ef;--panel:#fff;--raised:#e2e2dd;--line:#d6d6d0;--ink:#111;--muted:#666}
+.ts.light .logo i{color:#111}
+.ts.light .kicker{align-self:flex-start;background:var(--accent);color:#111;padding:8px 20px;border-radius:14px}
+.ts.light .title em{color:#111;background:linear-gradient(transparent 60%,var(--accent) 60%)}
+.ts.light .bar.hot{color:#111}
+.ts.light .bubble small,.ts.light .vs p.on{color:#111}
+.ts.light .vs p.on{background:var(--accent);margin:0 -18px;padding:22px 18px;border-radius:16px;border-top:0}
+.ts.cta .kicker{background:none}
+.ts.cta .title em{background:none}
+.ts .btn{align-self:flex-start;white-space:nowrap;font-size:38px;font-weight:600;background:#111;color:#f1f1ef;padding:32px 52px;border-radius:999px}
+
+</style>
+
+<header class="bar">
+  <div class="wrap">
+    <div class="brand"><img src="ixo.svg" alt="iXo"><span data-t="brand"></span></div>
+    <div class="seg" role="group" aria-label="Style" id="seg-style">
+      <button type="button" data-v="photo" data-t="sPhoto"></button><button type="button" data-v="typo" data-t="sTypo"></button><button type="button" data-v="both" data-t="sBoth"></button>
+    </div>
+    <div class="seg" role="group" aria-label="Language" id="seg-lang">
+      <button type="button" data-v="ru">RU</button><button type="button" data-v="en">EN</button>
+    </div>
+    <div class="seg" role="group" aria-label="Format" id="seg-fmt">
+      <button type="button" data-v="tt"><span class="wide">TikTok </span>9:16</button><button type="button" data-v="ig"><span class="wide">Instagram </span>4:5</button>
+    </div>
+    <div class="seg" role="group" aria-label="Look" id="seg-theme">
+      <button type="button" data-v="dark" data-t="dark"></button><button type="button" data-v="light" data-t="light"></button>
+    </div>
+  </div>
+  <div class="wrap"><nav class="nav" id="nav" aria-label="Branches"></nav></div>
+</header>
+
+<main class="wrap" id="main">
+  <section class="intro">
+    <div>
+      <h1 id="title"></h1>
+      <p data-t="lead"></p>
+    </div>
+    <div>
+      <ul class="rules">
+        <li data-t="r0"></li><li data-t="r1"></li><li data-t="r2"></li><li class="y" data-t="r3"></li><li class="y" data-t="r4"></li>
+      </ul>
+      <p class="note" data-t="note"></p>
+    </div>
+  </section>
+  <div id="branches"></div>
+  <footer class="foot" data-t="foot"></footer>
+</main>
+
+<div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-labelledby="vname">
+  <div class="vtop"><b id="vname"></b><span id="vpos"></span>
+    <button type="button" class="ibtn x" id="vclose" aria-label="Close">✕</button></div>
+  <div class="stage">
+    <button type="button" class="ibtn" id="vprev" aria-label="Previous slide">←</button>
+    <div class="vframe" id="vframe"></div>
+    <button type="button" class="ibtn" id="vnext" aria-label="Next slide">→</button>
+  </div>
+  <div class="dots" id="vdots"></div>
+</div>
+
+<script>
+/* iXo photo carousels: every series, in Russian and English, with the reasoning behind it.
+   Shared by photo.html (PNG export) and the showcase page. Photos: <set>/<id>/<photo>.jpg.
+
+   Series: id, name, goal (reach | comments | saves | shares | clicks | follows), why, ixo, slides.
+   Slide fields:
+     photo, pos (object-position), zoom, flip, dim   the shot and its framing
+     label   small line above the headline, only where it carries meaning
+     h, sub  headline and subline; with a panel the headline is smaller; size:'l' forces the smaller size
+     list:{items, keys:'num'|'abc', on, from}   bars:{rows:[[name, n]], hot}   vs:[[head, items, onIndex] x2]
+     tabs:[...], more   chat:[['me'|'ixo', text]]
+     final:true   the yellow sheet with the link
+   Every text is L(ru, en). */
+(function () {
+const L = (ru, en) => ({ru, en});
+
+window.IXO_SERIES = [
+{
+  id:'before-after', name:L('Было → стало','Before → after'), goal:'reach',
+  why:L('Самый простой сюжет: хаос в голове на первом слайде, один шаг на последнем. Узнаёт себя почти каждый, поэтому это главный кандидат на охват.',
+        'The simplest story: a head full of chaos on slide one, a single step at the end. Almost everyone recognises it, so it is the main reach candidate.'),
+  ixo:L('iXo появляется в переписке и отвечает вопросом, а не советом.','iXo appears in the chat and answers with a question, not advice.'),
+  slides:[
+    {photo:'night', pos:'50% 30%', h:L('В голове 14&nbsp;вкладок. Все открыты.','14 tabs open in your head. All of them.'),
+     sub:L('И ни одну не получается закрыть.','And you can’t close a single one.')},
+    {photo:'bed', pos:'0% 30%', zoom:1.3, dim:.3,
+     tabs:[L('Отчёт до пятницы','Report due Friday'),L('Позвонить маме','Call mum'),L('Спортзал???','Gym???'),L('Кредит','The loan'),
+           L('Сменить работу?','Change jobs?'),L('Английский','Language class'),L('Ремонт','Renovation'),L('Выспаться','Sleep, finally')],
+     more:L('и ещё 6','and 6 more'), h:L('Всё срочно. И всё сразу.','All urgent. All at once.')},
+    {photo:'typing', pos:'50% 22%', dim:.12,
+     chat:[['me',L('Всё навалилось. Не знаю, за что хвататься.','Everything piled up. I don’t know where to start.')],
+           ['ixo',L('Понял. Что из этого нельзя перенести дальше пятницы?','Got it. Which of these can’t wait past Friday?')]]},
+    {photo:'walk', pos:'52% 36%', h:L('Не нужно видеть весь путь.','You don’t need to see the whole path.'),
+     sub:L('Нужен один шаг, который можно сделать завтра.','You need one step you can take tomorrow.')},
+    {photo:'desk', pos:'50% 24%', h:L('Утро, 8:00. Одна задача. 30&nbsp;минут.','8 am. One task. 30 minutes.'),
+     sub:L('Остальные 13 вкладок подождут.','The other 13 tabs can wait.')},
+    {final:true, photo:'window', pos:'100% 20%', flip:true, h:L('Закрой одну вкладку сегодня.','Close one tab today.'),
+     sub:L('Напиши iXo одну мысль, которая не даёт уснуть.','Tell iXo the one thought that keeps you awake.')},
+  ]},
+{
+  id:'one-question', name:L('Один вопрос','One question'), goal:'clicks',
+  why:L('Ведём одну ситуацию по схеме iXo: контекст, приоритет, подход, первый шаг. Зритель проходит весь путь и хочет пройти его про себя.',
+        'One situation walked through the iXo flow: context, priority, approach, first step. Viewers follow the whole path and want to walk it for themselves.'),
+  ixo:L('Сама карусель повторяет то, как iXo ведёт разговор.','The carousel itself mirrors how iXo runs a conversation.'),
+  slides:[
+    {photo:'overload', h:L('Задач много. Времени нет. С чего начать?','Too many tasks. No time. Where do I start?'),
+     sub:L('Разберём за 4 шага.','Let’s sort it out in 4 steps.')},
+    {photo:'corridor', label:L('Шаг 1 из 4. Контекст','Step 1 of 4. Context'), h:L('Что на самом деле происходит?','What is really going on?'),
+     list:{items:[L('Слишком много задач','Too many tasks'),L('Не хватает времени','Not enough time'),L('Непонятно, с чего начать','Not sure where to start')]}},
+    {photo:'bus', label:L('Шаг 2 из 4. Приоритет','Step 2 of 4. Priority'), h:L('Что из этого важнее всего?','Which of these matters most?'),
+     list:{items:[L('Рабочий проект','A work project'),L('Время для себя','Time for myself'),L('Новый навык','A new skill')], on:0}},
+    {photo:'tea', label:L('Шаг 3 из 4. Подход','Step 3 of 4. Approach'), h:L('Как к этому подойти?','How do you approach it?'),
+     list:{items:[L('Разбить на части','Break it down'),L('Освободить место','Make room for it'),L('Убрать лишнее','Clear the clutter')], on:0}},
+    {photo:'morning', label:L('Шаг 4 из 4. Первый шаг','Step 4 of 4. First step'), h:L('Одна задача. 30&nbsp;минут каждое утро.','One task. 30 minutes every morning.'),
+     sub:L('Не весь путь. Только следующий шаг.','Not the whole path. Just the next step.')},
+    {final:true, photo:'street', h:L('А какой твой первый шаг?','So what is your first step?'),
+     sub:L('Расскажи iXo, что у тебя в голове. Он задаст те же четыре вопроса — про тебя.','Tell iXo what’s on your mind. It will ask the same four questions — about you.')},
+  ]},
+{
+  id:'life-map', name:L('Карта жизни','Life map'), goal:'comments',
+  why:L('Чужая карта с цифрами: человек сразу примеряет её на себя и пишет «а у меня». Ставка на комментарии и репосты.',
+        'Someone else’s map with numbers: people instantly compare and comment “mine is…”. Built for comments and shares.'),
+  ixo:L('Показывает карту жизни — то, чего нет у обычных чат-ботов.','Shows the life map, something ordinary chatbots don’t have.'),
+  slides:[
+    {photo:'metro', h:L('Работа&nbsp;— 48.<br>Здоровье&nbsp;— 22.<br>Узнаёшь?','Work — 48.<br>Health — 22.<br>Sound familiar?'),
+     sub:L('Столько раз за месяц один человек говорил о каждой сфере.','How often one person talked about each area in a month.')},
+    {photo:'dinner', h:L('О чём мы думаем на самом деле','What we actually think about'),
+     bars:{rows:[[L('Семья','Family'),99],[L('Работа','Work'),48],[L('Учёба','Learning'),34],[L('Здоровье','Health'),22],[L('Финансы','Money'),18]], hot:3}},
+    {photo:'office', h:L('Мы видим только то, что горит.','We only see what’s on fire.'),
+     sub:L('Остальное молча ждёт своей очереди. Иногда годами.','The rest waits its turn quietly. Sometimes for years.')},
+    {photo:'bench', h:L('20 сфер жизни. Одна картинка.','20 areas of life. One picture.'),
+     sub:L('Семья, здоровье, деньги, работа, учёба — рядом, а не по отдельности.','Family, health, money, work, learning — side by side, not apart.')},
+    {photo:'sofa', chat:[['me',L('Почему у меня здоровье всегда на потом?','Why is my health always “later”?')],
+                         ['ixo',L('Давай посмотрим, что забирает это время. Что было на этой неделе?','Let’s see what takes that time. What happened this week?')]]},
+    {final:true, photo:'run', h:L('Какая цифра у тебя?','What’s your number?'),
+     sub:L('Карта собирается сама — из того, что ты рассказываешь. Один факт за раз.','The map builds itself from what you share. One fact at a time.')},
+  ]},
+{
+  id:'quiz', name:L('Тест','Quiz'), goal:'comments',
+  why:L('Зритель выбирает вариант и пишет букву в комментариях. Порог входа — одна буква, поэтому ждём больше всего комментариев.',
+        'Viewers pick an option and comment a letter. The barrier is one character, so we expect the most comments.'),
+  ixo:L('Каждый ответ ведёт к разговору с iXo о своей букве.','Every answer leads to a conversation with iXo about your letter.'),
+  slides:[
+    {photo:'balcony', h:L('Что ты откладываешь дольше всего?','What have you been putting off the longest?'),
+     sub:L('Выбери одно и листай.','Pick one and swipe.')},
+    {photo:'scroll', h:L('Только честно','Be honest'),
+     list:{items:[L('Здоровье','Health'),L('Деньги','Money'),L('Работу мечты','The dream job'),L('Разговор с близким','A hard conversation')], keys:'abc'}},
+    {photo:'rain', label:L('Если A или B','If A or B'), h:L('Ты ждёшь идеального момента.','You’re waiting for the perfect moment.'),
+     sub:L('Его не будет. Нужен шаг на 10 минут — сегодня.','It won’t come. You need a 10-minute step — today.')},
+    {photo:'door', label:L('Если C или D','If C or D'), h:L('Ты ждёшь смелости.','You’re waiting for courage.'),
+     sub:L('Она приходит после первого шага, а не до него.','It shows up after the first step, not before.')},
+    {photo:'comment', h:L('Напиши свою букву в комментариях.','Drop your letter in the comments.'),
+     sub:L('Посмотрим, что откладывают чаще всего.','Let’s see what people put off the most.')},
+    {final:true, photo:'stride', h:L('Разбери свою букву с iXo.','Work through your letter with iXo.'),
+     sub:L('Один разговор — один первый шаг.','One conversation — one first step.')},
+  ]},
+{
+  id:'myth', name:L('Миф','Myth'), goal:'shares',
+  why:L('Спорим с привычным советом «просто соберись». Несогласие вызывает споры, согласие — репосты.',
+        'We push back on the usual “just get disciplined” advice. Disagreement drives debate, agreement drives shares.'),
+  ixo:L('iXo подаётся как способ найти ясность, а не мотивацию.','iXo is framed as a way to get clarity, not motivation.'),
+  slides:[
+    {photo:'couch', label:L('Миф','Myth'), h:L('«Тебе просто не хватает дисциплины»','“You just need more discipline”'),
+     sub:L('Нет. И вот почему.','No. Here’s why.')},
+    {photo:'notes', h:L('Тебе не хватает ясности.','You’re missing clarity.'),
+     sub:L('Трудно заставить себя делать то, что непонятно зачем и с чего начинать.','It’s hard to push yourself when you don’t know why or where to start.')},
+    {photo:'edge', h:L('Три признака, что дело не в лени','Three signs it isn’t laziness'),
+     list:{items:[L('Не можешь назвать следующий шаг','You can’t name the next step'),L('Цель звучит как «надо бы»','The goal sounds like “I should”'),
+                  L('Каждый день начинаешь заново','You start over every day')], keys:'num'}},
+    {photo:'cafe', h:L('Меньше воли. Больше ясности.','Less willpower. More clarity.'),
+     sub:L('Понятный шаг делается без героизма.','A clear step doesn’t take heroics.')},
+    {final:true, photo:'rooftop', h:L('Проясни одну цель.','Get clear on one goal.'),
+     sub:L('Расскажи iXo, что буксует. Вместе найдёте шаг, который не требует силы воли.','Tell iXo what’s stuck. Together you’ll find a step that needs no willpower.')},
+  ]},
+{
+  id:'checklist', name:L('Чек-лист','Checklist'), goal:'saves',
+  why:L('Полезный список, который хочется оставить себе и вернуться к нему в воскресенье. Ставка на сохранения.',
+        'A useful list people want to keep and come back to on Sunday. Built for saves.'),
+  ixo:L('Пять вопросов можно пройти с iXo голосом или текстом.','The five questions can be done with iXo by voice or text.'),
+  slides:[
+    {photo:'sunday', label:L('Сохрани','Save this'), h:L('5 вопросов на вечер воскресенья','5 questions for Sunday evening'),
+     sub:L('10 минут — и неделя начинается спокойнее.','10 minutes for a calmer week.')},
+    {photo:'dusk', label:L('Про прошлую неделю','About last week'), h:L('Оглянись','Look back'),
+     list:{items:[L('Что дало мне силы?','What gave me energy?'),L('Что их забрало?','What drained it?'),L('Что я отложил?','What did I put off?')], keys:'num'}},
+    {photo:'write', label:L('Про следующую','About next week'), h:L('Посмотри вперёд','Look ahead'),
+     list:{items:[L('Что одно сделает неделю удачной?','What one thing would make it a good week?'),L('Какой первый шаг в понедельник?','What’s my first step on Monday?')], keys:'num', from:4}},
+    {photo:'voice', h:L('Ответы лучше проговорить, чем держать в голове.','Answers work better said out loud than kept in your head.'),
+     sub:L('Вслух или текстом — так они становятся планом.','Spoken or written — that’s how they become a plan.')},
+    {final:true, photo:'monday', h:L('Пройди эти 5&nbsp;вопросов с iXo.','Go through these 5 with iXo.'),
+     sub:L('Текстом или голосом. Главное он сохранит в твоей карте.','By text or voice. It keeps what matters in your map.')},
+  ]},
+{
+  id:'conversation', name:L('Переписка','Conversation'), goal:'clicks',
+  why:L('Вся карусель — диалог с iXo. Зритель видит сам продукт в работе, поэтому ждём самых тёплых переходов. Реплики iXo здесь примерные, в публикацию пойдут настоящие.',
+        'The whole carousel is a chat with iXo. Viewers see the product at work, so we expect the warmest clicks. iXo’s lines here are illustrative; real ones go into publishing.'),
+  ixo:L('Продукт показан напрямую: вопросы iXo и путь к первому шагу.','The product is shown directly: iXo’s questions and the path to a first step.'),
+  slides:[
+    {photo:'night', h:L('«Мне 34, и я не знаю, чем хочу заниматься»','“I’m 34 and I don’t know what I want to do”'),
+     sub:L('Что на это отвечает iXo.','Here’s what iXo says back.')},
+    {photo:'phone', chat:[['me',L('Мне 34, и я не знаю, чем хочу заниматься.','I’m 34 and I don’t know what I want to do.')],
+                          ['ixo',L('Давай без спешки. Что в последний раз увлекло тебя так, что ты забыл про время?','No rush. When did something last absorb you so much you lost track of time?')]]},
+    {photo:'help', chat:[['me',L('Наверное, когда помогал другу с его проектом.','Probably when I helped a friend with his project.')],
+                         ['ixo',L('Что там было твоим — идеи, организация или люди?','What part felt like yours — the ideas, the organising or the people?')]]},
+    {photo:'people', chat:[['me',L('Люди. Мне нравилось их собирать.','The people. I liked bringing them together.')],
+                           ['ixo',L('Тогда первый шаг: вспомни три случая, где ты это уже делал. Запишем?','Then a first step: recall three times you’ve done that. Shall we note them?')]]},
+    {photo:'steps', h:L('Ни одного совета. Только вопросы.','Not one piece of advice. Only questions.'),
+     sub:L('Ответ уже был у него. Его нужно было достать.','The answer was already there. It just had to come out.')},
+    {final:true, photo:'commute', h:L('Какой вопрос ты задашь первым?','What will you ask first?'),
+     sub:L('iXo — личный AI-коуч. Текстом или голосом.','iXo is your personal AI coach. By text or voice.')},
+  ]},
+{
+  id:'20-areas', name:L('20 сфер','20 areas'), goal:'follows',
+  why:L('Сериал: одна сфера жизни — одна карусель, всего двадцать. Номер серии на обложке даёт повод подписаться ради продолжения.',
+        'A serial: one life area per carousel, twenty in all. The episode number on the cover gives a reason to follow for the next one.'),
+  ixo:L('Каждая серия ведёт к своей сфере на карте iXo.','Each episode points to its area on the iXo map.'),
+  slides:[
+    {photo:'receipts', label:L('Сфера 4 из 20. Финансы','Area 4 of 20. Money'), h:L('Деньги — тема, о которой ты молчишь даже с собой','Money — the topic you avoid even with yourself'),
+     sub:L('Три вопроса, чтобы начать.','Three questions to begin.')},
+    {photo:'count', label:L('Вопрос 1','Question 1'), h:L('Сколько мне на самом деле нужно в месяц?','How much do I actually need a month?'),
+     sub:L('Не «хотелось бы», а точная цифра.','Not “would be nice”. An exact number.')},
+    {photo:'bags', label:L('Вопрос 2','Question 2'), h:L('На что я трачу, чтобы не думать?','What do I spend on to avoid thinking?'),
+     sub:L('Покупки от усталости, скуки, тревоги.','Purchases out of tiredness, boredom, worry.')},
+    {photo:'dream', label:L('Вопрос 3','Question 3'), h:L('Что я сделаю, когда денег станет достаточно?','What will I do once there’s enough?'),
+     sub:L('Если ответа нет — дело не в деньгах.','If there’s no answer, it isn’t about money.')},
+    {final:true, photo:'calm', h:L('Финансы — одна из 20 сфер.','Money is one of 20 areas.'),
+     sub:L('Посмотри на своей карте, как она связана с остальными.','See on your map how it connects to the rest.')},
+  ]},
+{
+  id:'question-of-day', name:L('Вопрос дня','Question of the day'), goal:'reach',
+  why:L('Всего три слайда. Короткую карусель чаще досматривают до конца, и она дешевле в производстве.',
+        'Just three slides. Short carousels get finished more often and cost less to make.'),
+  ixo:L('Предлагает ответить на вопрос вслух — голосовой режим iXo.','Invites you to answer out loud — iXo’s voice mode.'),
+  slides:[
+    {photo:'tram', h:L('Если бы завтра у тебя было 30&nbsp;свободных минут — на что?','If you had 30 free minutes tomorrow — what for?'),
+     sub:L('Ответь себе, потом листай.','Answer, then swipe.')},
+    {photo:'clock', h:L('Почему ты не делаешь этого уже сейчас?','Why aren’t you doing it already?'),
+     sub:L('Обычно дело не во времени.','It’s usually not about time.')},
+    {final:true, photo:'sun', h:L('Ответь на это вслух.','Answer it out loud.'),
+     sub:L('iXo выслушает и поможет найти эти 30 минут.','iXo will listen and help you find those 30 minutes.')},
+  ]},
+{
+  id:'decision', name:L('Решение','Decision'), goal:'clicks',
+  why:L('Большой жизненный выбор. Люди перед серьёзным решением сильнее всех мотивированы попробовать коуча.',
+        'A big life choice. People facing a serious decision are the most motivated to try a coach.'),
+  ixo:L('iXo раскладывает решение по своей схеме: контекст, приоритет, подход, шаг.','iXo lays the decision out in its own flow: context, priority, approach, step.'),
+  slides:[
+    {photo:'office', h:L('Уйти с работы или остаться?','Quit the job or stay?'),
+     sub:L('Список «за и против» тут не помогает. Вот что помогает.','A pros-and-cons list won’t help here. This will.')},
+    {photo:'car', h:L('Что ты на самом деле сравниваешь','What you’re really comparing'),
+     vs:[[L('Остаться','Stay'),[L('Стабильность','Stability'),L('Знакомые люди','Familiar people'),L('Страх пожалеть','Fear of regret')],2],
+         [L('Уйти','Leave'),[L('Рост','Growth'),L('Неизвестность','The unknown'),L('Страх застрять','Fear of getting stuck')],2]]},
+    {photo:'balcony', h:L('С обеих сторон — страх.','There’s fear on both sides.'),
+     sub:L('Значит, выбираешь не между работами, а между страхами.','So you’re choosing between fears, not jobs.')},
+    {photo:'notebook', h:L('Три вопроса вместо списка','Three questions instead of a list'),
+     list:{items:[L('О чём я пожалею через 5 лет?','What will I regret in 5 years?'),L('Что я узнаю, если попробую?','What will I learn if I try?'),
+                  L('Какой шаг можно сделать, не увольняясь?','What step can I take without quitting?')], keys:'num'}},
+    {final:true, photo:'exit', h:L('Не решай в одиночку.','Don’t decide alone.'),
+     sub:L('Разложи решение с iXo: контекст, приоритет, подход, первый шаг.','Lay it out with iXo: context, priority, approach, first step.')},
+  ]},
+{
+  id:'burnout', name:L('Выгорание','Burnout'), goal:'shares',
+  why:L('Тему выгорания пересылают друзьям и коллегам со словами «это про тебя». Чек из четырёх признаков даёт повод сохранить и переслать.',
+        'People forward burnout posts to friends and colleagues with “this is you”. A four-sign check gives a reason to save and share.'),
+  ixo:L('iXo помогает найти, что именно забирает силы, а не просто советует отдохнуть.','iXo helps find what exactly drains you instead of just saying “rest”.'),
+  slides:[
+    {photo:'carpark', h:L('Это не лень. Это выгорание.','It isn’t laziness. It’s burnout.'),
+     sub:L('Проверь четыре признака.','Check four signs.')},
+    {photo:'screen', h:L('Четыре признака','Four signs'),
+     list:{items:[L('Выходных не хватает, чтобы восстановиться','Weekends aren’t enough to recover'),L('Раздражает то, что раньше радовало','What used to be fun now annoys you'),
+                  L('Утром тяжело даже начать','Mornings are hard to even start'),L('Отдых ощущается как вина','Rest feels like guilt')], keys:'num'}},
+    {photo:'sofa', h:L('Отпуск не лечит, если возвращаешься туда же.','A holiday won’t fix it if you come back to the same place.'),
+     sub:L('Сначала нужно понять, что именно забирает силы.','First, find out what exactly drains you.')},
+    {photo:'sunday', chat:[['me',L('Я просто устала. Всё время.','I’m just tired. All the time.')],
+                           ['ixo',L('Давай найдём, что забирает больше всего. Что из этой недели ты бы не стала повторять?','Let’s find what takes the most. What from this week would you not repeat?')]]},
+    {photo:'forest', h:L('Начни с одного.','Start with one thing.'),
+     sub:L('Убери одну вещь, которая каждый день забирает силы.','Remove one thing that drains you every day.')},
+    {final:true, photo:'steps', h:L('Разберись, что тебя истощает.','Find out what’s draining you.'),
+     sub:L('Расскажи iXo про свою неделю. Он поможет увидеть, где утекают силы.','Tell iXo about your week. It will help you see where the energy goes.')},
+  ]},
+{
+  id:'talk', name:L('Разговор','The talk'), goal:'comments',
+  why:L('У каждого есть разговор, который он откладывает: с родителями, партнёром, начальником. Вопрос «с кем?» на обложке зовёт в комментарии.',
+        'Everyone has a conversation they keep putting off: with a parent, a partner, a boss. “With whom?” on the cover pulls people into the comments.'),
+  ixo:L('iXo помогает подготовить первую фразу и отрепетировать разговор.','iXo helps prepare the opening line and rehearse the talk.'),
+  slides:[
+    {photo:'phone', h:L('Есть разговор, который ты откладываешь уже год.','There’s a talk you’ve been putting off for a year.'),
+     sub:L('С кем он?','Who is it with?')},
+    {photo:'porch', h:L('Почему мы молчим','Why we stay silent'),
+     list:{items:[L('Боюсь испортить отношения','Afraid to damage the relationship'),L('Не знаю, с чего начать','Don’t know how to start'),
+                  L('Жду подходящего момента','Waiting for the right moment')]}},
+    {photo:'window', h:L('Подходящего момента не будет. Будет первая фраза.','There won’t be a right moment. There will be a first sentence.'),
+     sub:L('Её можно подготовить заранее.','You can prepare it in advance.')},
+    {photo:'notes', chat:[['me',L('Хочу поговорить с отцом, но каждый раз ухожу от темы.','I want to talk to my dad, but I always change the subject.')],
+                          ['ixo',L('Что ты хочешь, чтобы он услышал в итоге? Начнём с одной фразы.','What do you want him to hear in the end? Let’s start with one sentence.')]]},
+    {photo:'walk', h:L('Три шага к разговору','Three steps to the talk'),
+     list:{items:[L('Назови, чего ты хочешь от разговора','Name what you want from the talk'),L('Подготовь первую фразу','Prepare the first sentence'),
+                  L('Выбери время, а не момент','Pick a time, not a moment')], keys:'num'}},
+    {final:true, photo:'bench', h:L('Начни с первой фразы.','Start with the first sentence.'),
+     sub:L('Отрепетируй разговор с iXo — текстом или голосом.','Rehearse the talk with iXo — by text or voice.')},
+  ]},
+{
+  id:'monday', name:L('С понедельника','From Monday'), goal:'reach',
+  why:L('«Начну с понедельника» говорил себе каждый. Узнаваемый провал и маленький выход из него. Хорошо ставить в воскресенье и понедельник.',
+        'Everyone has said “I’ll start on Monday”. A recognisable failure and a small way out. Best posted on Sunday and Monday.'),
+  ixo:L('iXo превращает большой план в один шаг на 10 минут.','iXo turns a big plan into one 10-minute step.'),
+  slides:[
+    {photo:'list', size:'l', h:L('С&nbsp;понедельника начну всё сразу.','On Monday I’ll start everything at once.'),
+     sub:L('Знакомо? Вот почему это не работает.','Sound familiar? Here’s why it doesn’t work.')},
+    {photo:'gym', h:L('План на понедельник','The Monday plan'),
+     list:{items:[L('Спорт каждый день','Workout every day'),L('Без сладкого','No sugar'),L('Английский по часу','An hour of English'),
+                  L('Ложиться в 23:00','Bed at 11 pm')]}},
+    {photo:'wednesday', h:L('К среде от плана не остаётся ничего.','By Wednesday nothing is left of the plan.'),
+     sub:L('Дело не в слабой воле. План был написан для другого человека.','It isn’t weak will. The plan was written for someone else.')},
+    {photo:'stretch', h:L('Возьми одно. На 10&nbsp;минут.','Take one thing. For 10 minutes.'),
+     sub:L('Маленький шаг каждый день сильнее большого раз в неделю.','A small daily step beats a big weekly one.')},
+    {photo:'coffee', chat:[['me',L('Хочу начать заниматься спортом, но каждый раз бросаю.','I want to start working out but I always quit.')],
+                           ['ixo',L('Что ты могла бы делать 10 минут в день, даже в плохой день?','What could you do for 10 minutes a day, even on a bad day?')]]},
+    {final:true, photo:'commute', h:L('Начни не с понедельника, а с одного шага.','Don’t start on Monday. Start with one step.'),
+     sub:L('Расскажи iXo, что хочешь изменить. Он поможет найти шаг на 10 минут.','Tell iXo what you want to change. It will help find a 10-minute step.')},
+  ]},
+{
+  id:'compare', name:L('Чужая лента','Their feed'), goal:'shares',
+  why:L('Сравнение себя с чужой лентой — боль молодой аудитории. Слайд «в ленте / за кадром» сам просится в репост.',
+        'Comparing yourself to other people’s feeds hurts younger audiences. The “in the feed / off camera” slide begs to be shared.'),
+  ixo:L('iXo помогает сравнивать себя с собой год назад и видеть свой путь.','iXo helps you compare yourself with you a year ago and see your own path.'),
+  slides:[
+    {photo:'bed', h:L('Ты сравниваешь свою жизнь с чужими лучшими кадрами.','You compare your life to other people’s best shots.'),
+     sub:L('И всегда проигрываешь.','And you always lose.')},
+    {photo:'stop', h:L('Что ты видишь и чего нет','What you see and what you don’t'),
+     vs:[[L('В ленте','In the feed'),[L('Отпуск','A holiday'),L('Новая работа','A new job'),L('Свадьба','A wedding')],-1],
+         [L('За кадром','Off camera'),[L('Кредит на отпуск','A loan for the trip'),L('Полгода поисков','Six months of searching'),L('Ссора накануне','A fight the night before')],-1]]},
+    {photo:'mirror', h:L('Сравнивай себя с собой год назад.','Compare yourself with you a year ago.'),
+     sub:L('Это единственное честное сравнение.','It’s the only fair comparison.')},
+    {photo:'friend', chat:[['me',L('У всех всё получается, а я стою на месте.','Everyone is doing great and I’m stuck.')],
+                           ['ixo',L('Давай посмотрим на твой год. Что ты умеешь сейчас, чего не умел прошлой осенью?','Let’s look at your year. What can you do now that you couldn’t last autumn?')]]},
+    {final:true, photo:'grass', h:L('Смотри на свой путь, а не на чужую ленту.','Look at your path, not their feed.'),
+     sub:L('iXo помнит, с чего ты начинал, и покажет, как далеко ты ушёл.','iXo remembers where you started and shows how far you’ve come.')},
+  ]},
+{
+  id:'morning', name:L('Первые 10 минут','First 10 minutes'), goal:'saves',
+  why:L('Утренний ритуал — один из самых сохраняемых форматов. Короткий список, который легко повторить завтра.',
+        'Morning routines are among the most saved formats. A short list that is easy to repeat tomorrow.'),
+  ixo:L('iXo помогает выбрать одно главное дело дня до почты и мессенджеров.','iXo helps pick the day’s one main task before email and messages.'),
+  slides:[
+    {photo:'alarm', h:L('Первые 10&nbsp;минут утра решают, чей это будет день.','The first 10 minutes decide whose day it will be.'),
+     sub:L('Твой или телефона.','Yours or your phone’s.')},
+    {photo:'curtains', label:L('Сохрани','Save this'), h:L('10 минут без телефона','10 minutes without the phone'),
+     list:{items:[L('Открой шторы','Open the curtains'),L('Выпей стакан воды','Drink a glass of water'),L('Запиши одно главное дело','Write down one main task'),
+                  L('Две минуты тишины','Two minutes of quiet')], keys:'num'}},
+    {photo:'water', h:L('Одно главное дело — до обеда.','One main task — before lunch.'),
+     sub:L('Остальное подстроится.','The rest will fall into place.')},
+    {photo:'notebook', chat:[['me',L('Утром сразу открываю почту, и день уже не мой.','I open email first thing and the day is no longer mine.')],
+                             ['ixo',L('Какое одно дело сделало бы этот день хорошим? Запишем его до почты.','What one thing would make today good? Let’s write it down before email.')]]},
+    {final:true, photo:'leave', h:L('Начни завтра с одного дела.','Start tomorrow with one task.'),
+     sub:L('Вечером расскажи iXo про завтра — утром он напомнит, с чего начать.','Tell iXo about tomorrow tonight — in the morning it reminds you where to start.')},
+  ]},
+{
+  id:'goals', name:L('Цели на год','Goals for the year'), goal:'reach',
+  why:L('Сезонная тема ноября–января. Большинство новогодних целей забывается к февралю, и все это знают по себе.',
+        'A seasonal topic for November to January. Most New Year goals are forgotten by February, and everyone knows it first-hand.'),
+  ixo:L('iXo помогает начать цель до Нового года, с первого шага на этой неделе.','iXo helps start a goal before New Year, with a first step this week.'),
+  slides:[
+    {photo:'party', h:L('Большинство новогодних целей забываются к февралю.','Most New Year goals are forgotten by February.'),
+     sub:L('Твои тоже?','Yours too?')},
+    {photo:'february', h:L('Почему так','Why it happens'),
+     list:{items:[L('Цель слишком большая','The goal is too big'),L('Непонятен первый шаг','The first step is unclear'),
+                  L('Есть «надо», нет «зачем»','There’s a “should” but no “why”')], keys:'num'}},
+    {photo:'desk', h:L('Цель без первого шага — просто желание.','A goal without a first step is just a wish.'),
+     sub:L('Шаг можно сделать уже на этой неделе.','You can take the step this week.')},
+    {photo:'note', chat:[['me',L('Хочу в следующем году выучить английский.','Next year I want to learn English.')],
+                         ['ixo',L('Зачем он тебе? И что можно сделать на этой неделе, а не в январе?','What do you need it for? And what can you do this week, not in January?')]]},
+    {final:true, photo:'run', h:L('Начни цель до Нового года.','Start your goal before New Year.'),
+     sub:L('Расскажи iXo, чего хочешь от следующего года. Найдёте первый шаг уже сегодня.','Tell iXo what you want from next year. Find the first step today.')},
+  ]},
+{
+  id:'selftime', name:L('Час для себя','An hour for yourself'), goal:'comments',
+  why:L('Аудитория 30–50, на которой держится семья и работа. Диаграмма суток с нулём «для себя» узнаётся сразу и вызывает «это я».',
+        'The 30–50 audience who carry both family and work. A day chart with zero hours “for me” is instantly recognised: “that’s me”.'),
+  ixo:L('iXo помогает найти 20 минут в неделе и защитить их.','iXo helps find 20 minutes in the week and protect them.'),
+  slides:[
+    {photo:'lunches', h:L('Когда у тебя последний раз был час только для себя?','When did you last have an hour just for yourself?'),
+     sub:L('Не для семьи, не для работы.','Not for family, not for work.')},
+    {photo:'car', h:L('Сутки одного человека','One person’s day'),
+     bars:{rows:[[L('Работа, ч','Work, h'),9],[L('Семья, ч','Family, h'),5],[L('Дорога, ч','Commute, h'),2],[L('Дом, ч','Home, h'),2],[L('Для себя, ч','For me, h'),0]], hot:4}},
+    {photo:'dishes', h:L('Забота о себе — не эгоизм.','Taking care of yourself isn’t selfish.'),
+     sub:L('Без неё заканчиваются силы на всех остальных.','Without it, there’s no energy left for anyone else.')},
+    {photo:'cafe', chat:[['me',L('Мне некогда. Всё на мне.','I have no time. Everything is on me.')],
+                         ['ixo',L('Понимаю. Где в этой неделе есть хотя бы 20 минут, которые можно забрать себе?','I hear you. Where in this week are there at least 20 minutes you could take for yourself?')]]},
+    {final:true, photo:'walk', h:L('Найди свои 20&nbsp;минут.','Find your 20 minutes.'),
+     sub:L('Расскажи iXo про свою неделю. Он поможет их найти и не отдать.','Tell iXo about your week. It will help you find them and keep them.')},
+  ]},
+];
+
+/* Branches: the showcase groups the themes by the life situation they speak to */
+window.IXO_BRANCHES = [
+  {id:'focus', name:L('Хаос и фокус','Chaos and focus'), themes:['before-after','one-question','morning','question-of-day'],
+   desc:L('Слишком много дел и мыслей. Темы о том, как найти один следующий шаг.','Too many tasks and thoughts. Themes about finding one next step.')},
+  {id:'energy', name:L('Силы и состояние','Energy'), themes:['burnout','selftime','myth'],
+   desc:L('Усталость, выгорание и вина за отдых. Эти темы пересылают тем, кому они нужны.','Tiredness, burnout and guilt about resting. Themes people forward to someone who needs them.')},
+  {id:'goals', name:L('Цели и решения','Goals and decisions'), themes:['decision','goals','monday','20-areas'],
+   desc:L('Большие выборы и планы, которые разваливаются. Самая мотивированная аудитория для коуча.','Big choices and plans that fall apart. The audience most ready for a coach.')},
+  {id:'people', name:L('Люди и отношения','People'), themes:['talk','compare','conversation'],
+   desc:L('Разговоры, сравнения, близкие. Здесь iXo показан в живом диалоге.','Conversations, comparisons, loved ones. Here iXo appears in a real dialogue.')},
+  {id:'self', name:L('Узнай себя','Know yourself'), themes:['quiz','life-map','checklist'],
+   desc:L('Тест, карта жизни и чек-лист. Форматы для комментариев и сохранений.','A quiz, the life map and a checklist. Formats for comments and saves.')},
+];
+})();
+
+</script>
+<script>
+/* Text-only (typographic) iXo carousels: the 10 original concepts, RU/EN, made on the Mac.
+   Shared by carousels.html (PNG export) and the photo showcase. */
+(function () {
+const L=(ru,en)=>({ru,en});
+const SERIES=[
+{
+  name:L('Серия «Один вопрос»','Series “One question”'),
+  why:L('Берём одну жизненную ситуацию и ведём по схеме iXo: контекст → приоритет → подход → первый шаг. Обрываем перед личным ответом.',
+        'One real-life situation walked through the iXo flow: context → priority → approach → first step. Stops right before the personal answer.'),
+  tag:L('Один вопрос','One question'),
+  slides:[
+    {t:'cover',glow:1,kicker:L('Знакомо?','Sound familiar?'),
+      title:L('Задач много.<br>Времени нет.<br><em>С чего начать?</em>','Too many tasks.<br>Not enough time.<br><em>Where do I start?</em>'),
+      sub:L('Разберём за 4 шага →','Let’s work it out in 4 steps →')},
+    {t:'chips',num:'01',kicker:L('Контекст','Context'),title:L('Что на самом деле происходит?','What is really going on?'),
+      items:[L('Слишком много задач','Too many tasks'),L('Не хватает времени','Not enough time'),L('Непонятно, с чего начать','Not sure where to start')]},
+    {t:'chips',num:'02',kicker:L('Приоритет','Priority'),title:L('Что из этого важнее всего?','Which of these matters most?'),on:0,
+      items:[L('Рабочий проект','A work project'),L('Время для себя','Time for myself'),L('Новый навык','A new skill')]},
+    {t:'chips',num:'03',kicker:L('Подход','Approach'),title:L('Как к этому подойти?','How do you approach it?'),on:0,
+      items:[L('Разбить на части','Break it down'),L('Освободить место','Make space for it'),L('Убрать лишнее','Clear the clutter')]},
+    {t:'big',num:'04',kicker:L('Первый шаг','First step'),
+      title:L('Одна задача.<br><em>30 минут</em><br>каждое утро.','One task.<br><em>30 minutes</em><br>each morning.'),
+      sub:L('Не весь путь. Только следующий шаг.','Not the whole path. Just the next step.')},
+    {t:'cta',title:L('А какой<br><em>твой</em> первый шаг?','So what is<br><em>your</em> first step?'),
+      sub:L('Расскажи iXo, что у тебя в голове. Он задаст те же четыре вопроса — про тебя.','Tell iXo what’s on your mind. It will ask the same four questions — about you.'),
+      btn:L('Ссылка в профиле','Link in bio')}
+  ]
+},
+{
+  name:L('Серия «Карта жизни»','Series “Life map”'),
+  why:L('Показываем чужую карту с цифрами — человек сразу примеряет на себя и пишет «а у меня». Работает на комментарии и репосты.',
+        'Shows someone else’s map with numbers — people immediately compare and comment “mine is…”. Built for comments and shares.'),
+  tag:L('Карта жизни','Life map'),
+  slides:[
+    {t:'cover',kicker:L('Проверь себя','Check yourself'),
+      title:L('Работа — <em>48</em>.<br>Здоровье — <em>22</em>.<br>Узнаёшь?','Work — <em>48</em>.<br>Health — <em>22</em>.<br>Recognise it?'),
+      sub:L('Столько раз за месяц один человек говорил о каждой сфере →','How often one person talked about each area in a month →')},
+    {t:'map',title:L('О чём мы думаем на самом деле','What we actually think about'),hot:[3],
+      rows:[[L('Семья','Family'),99],[L('Работа','Work'),48],[L('Учёба','Learning'),34],[L('Здоровье','Health'),22],[L('Финансы','Finances'),18]]},
+    {t:'big',kicker:L('Замечаешь?','Notice?'),
+      title:L('Мы видим только то, что <em>горит</em>.','We only see what’s <em>on fire</em>.'),
+      sub:L('Остальное молча ждёт своей очереди. Иногда годами.','The rest quietly waits its turn. Sometimes for years.')},
+    {t:'big',kicker:L('А если иначе','What if'),
+      title:L('<em>20 сфер</em> жизни.<br>Одна картинка.','<em>20 areas</em> of life.<br>One picture.'),
+      sub:L('Семья, здоровье, деньги, работа, учёба — рядом, а не по отдельности.','Family, health, money, work, learning — side by side, not apart.')},
+    {t:'chat',q:L('Почему у меня здоровье всегда на потом?','Why is my health always “later”?'),
+      a:L('Давай посмотрим, что забирает это время. Что было на этой неделе?','Let’s look at what takes that time. What happened this week?')},
+    {t:'cta',title:L('Какая цифра<br>у <em>тебя</em>?','What’s <em>your</em><br>number?'),
+      sub:L('Карта собирается сама — из того, что ты рассказываешь. Один факт за раз.','The map builds itself from what you share. One fact at a time.'),
+      btn:L('Собрать свою карту · ссылка в профиле','Build your map · link in bio')}
+  ]
+},
+{
+  name:L('Серия «Было → стало»','Series “Before → after”'),
+  why:L('Самый простой и самый охватный формат: хаос в голове на первом слайде, один конкретный шаг на предпоследнем.',
+        'The simplest, widest-reach format: mental chaos on slide one, one concrete step near the end.'),
+  tag:L('Было → стало','Before → after'),
+  slides:[
+    {t:'cover',glow:1,kicker:'23:40',
+      title:L('В голове<br><em>14 вкладок</em>.<br>Все открыты.','<em>14 tabs</em><br>open in<br>your head.'),
+      sub:L('И ни одну не получается закрыть →','And you can’t close a single one →')},
+    {t:'chaos',items:[L('отчёт до пятницы','report due Friday'),L('позвонить маме','call mum'),L('спортзал???','gym???'),L('кредит','the loan'),
+      L('сменить работу?','change jobs?'),L('английский','language class'),L('ремонт','renovation'),L('выспаться','sleep, finally')]},
+    {t:'big',kicker:L('Хорошая новость','Good news'),
+      title:L('Не нужно видеть <em>весь путь</em>.','You don’t need to see <em>the whole path</em>.'),
+      sub:L('Нужен один шаг, который можно сделать завтра.','You need one step you can take tomorrow.')},
+    {t:'chat',q:L('Всё навалилось, не знаю, за что хвататься.','Everything piled up. I don’t know what to grab first.'),
+      a:L('Понял. Что из этого нельзя перенести дальше пятницы?','Got it. Which of these can’t wait past Friday?')},
+    {t:'big',kicker:L('Через 6 минут','6 minutes later'),
+      title:L('Завтра, 8:00.<br><em>Одна задача.</em><br>30 минут.','Tomorrow, 8:00.<br><em>One task.</em><br>30 minutes.'),
+      sub:L('13 вкладок можно закрыть до утра.','The other 13 tabs can close till morning.')},
+    {t:'cta',title:L('Закрой<br><em>одну</em> вкладку<br>сегодня.','Close<br><em>one</em> tab<br>today.'),
+      sub:L('Напиши iXo одну мысль, которая не даёт уснуть.','Tell iXo the one thought keeping you awake.'),
+      btn:L('Начать бесплатно · ссылка в профиле','Start free · link in bio')}
+  ]
+},
+{
+  name:L('Серия «Тест»','Series “Quiz”'),skin:'light',
+  why:L('Человек выбирает вариант и пишет букву в комментариях. Гипотеза: больше всего комментариев.','The viewer picks an option and comments a letter. Hypothesis: the most comments.'),
+  tag:L('Тест','Quiz'),
+  slides:[
+    {t:'cover',kicker:L('Тест на 10 секунд','10-second quiz'),
+      title:L('Что ты <em>откладываешь</em> дольше всего?','What have you been <em>putting off</em> the longest?'),
+      sub:L('Выбери одно и листай →','Pick one and swipe →')},
+    {t:'chips',kicker:L('Выбери','Pick'),title:L('Только честно','Be honest'),
+      items:[L('A · Здоровье','A · Health'),L('B · Деньги','B · Money'),L('C · Работу мечты','C · The dream job'),L('D · Разговор с близким','D · A hard conversation')]},
+    {t:'big',kicker:L('Если A или B','If A or B'),
+      title:L('Ты ждёшь <em>идеального момента</em>.','You’re waiting for the <em>perfect moment</em>.'),
+      sub:L('Его не будет. Нужен шаг на 10 минут — сегодня.','It won’t come. You need a 10-minute step — today.')},
+    {t:'big',kicker:L('Если C или D','If C or D'),
+      title:L('Ты ждёшь <em>смелости</em>.','You’re waiting for <em>courage</em>.'),
+      sub:L('Она приходит после первого шага, а не до него.','It shows up after the first step, not before.')},
+    {t:'big',kicker:L('В любом случае','Either way'),
+      title:L('Напиши свою букву в <em>комментариях</em>.','Drop your letter in the <em>comments</em>.'),
+      sub:L('Посмотрим, что откладывают чаще всего.','Let’s see what people put off the most.')},
+    {t:'cta',title:L('Разбери свою<br><em>букву</em> с iXo.','Work through<br>your <em>letter</em><br>with iXo.'),
+      sub:L('Один разговор — один первый шаг.','One conversation — one first step.'),
+      btn:L('Начать бесплатно · ссылка в профиле','Start free · link in bio')}
+  ]
+},
+{
+  name:L('Серия «Миф»','Series “Myth”'),
+  why:L('Спорим с привычным советом. Гипотеза: больше всего репостов и споров в комментариях.','Pushes back on common advice. Hypothesis: the most shares and debate.'),
+  tag:L('Миф','Myth'),
+  slides:[
+    {t:'cover',glow:1,kicker:L('Миф','Myth'),
+      title:L('«Тебе просто не хватает <em>дисциплины</em>»','“You just need more <em>discipline</em>”'),
+      sub:L('Нет. И вот почему →','No. Here’s why →')},
+    {t:'big',kicker:L('На деле','In reality'),
+      title:L('Тебе не хватает <em>ясности</em>.','You’re missing <em>clarity</em>.'),
+      sub:L('Трудно заставить себя делать то, что непонятно зачем и с чего начинать.','It’s hard to push yourself when you don’t know why or where to start.')},
+    {t:'chips',kicker:L('Проверь','Check'),title:L('Три признака, что дело не в лени','Three signs it isn’t laziness'),
+      items:[L('Не можешь назвать следующий шаг','You can’t name the next step'),L('Цель звучит как «надо бы»','The goal sounds like “I should”'),L('Каждый день начинаешь заново','You restart every single day')]},
+    {t:'big',kicker:L('Что вместо','Instead'),
+      title:L('Меньше воли.<br><em>Больше ясности.</em>','Less willpower.<br><em>More clarity.</em>'),
+      sub:L('Понятный шаг делается без героизма.','A clear step doesn’t take heroics.')},
+    {t:'cta',title:L('Проясни<br><em>одну</em> цель.','Get clear on<br><em>one</em> goal.'),
+      sub:L('Расскажи iXo, что буксует. Вместе найдёте шаг, который не требует силы воли.','Tell iXo what’s stuck. Find a step that doesn’t need willpower.'),
+      btn:L('Ссылка в профиле','Link in bio')}
+  ]
+},
+{
+  name:L('Серия «Чек-лист»','Series “Checklist”'),skin:'light',
+  why:L('Полезный список, который хочется оставить себе. Гипотеза: больше всего сохранений.','A useful list worth keeping. Hypothesis: the most saves.'),
+  tag:L('Чек-лист','Checklist'),
+  slides:[
+    {t:'cover',kicker:L('Сохрани','Save this'),
+      title:L('5 вопросов на вечер <em>воскресенья</em>','5 questions for <em>Sunday</em> evening'),
+      sub:L('10 минут — и неделя начинается спокойнее →','10 minutes for a calmer week →')},
+    {t:'chips',kicker:L('Оглянись','Look back'),title:L('Про прошлую неделю','About last week'),
+      items:[L('1 · Что дало мне силы?','1 · What gave me energy?'),L('2 · Что их забрало?','2 · What drained it?'),L('3 · Что я отложил?','3 · What did I put off?')]},
+    {t:'chips',kicker:L('Посмотри вперёд','Look ahead'),title:L('Про следующую','About next week'),
+      items:[L('4 · Что одно сделает неделю удачной?','4 · What one thing would make it a good week?'),L('5 · Какой первый шаг в понедельник?','5 · What’s my first step on Monday?')]},
+    {t:'big',kicker:L('Важно','Key'),
+      title:L('Ответы лучше <em>проговорить</em>, чем держать в голове.','Answers work better <em>said out loud</em> than kept in your head.'),
+      sub:L('Вслух или текстом — так они становятся планом.','Spoken or written — that’s how they become a plan.')},
+    {t:'cta',title:L('Пройди эти<br>5 вопросов<br><em>с iXo</em>.','Go through<br>these five<br><em>with iXo</em>.'),
+      sub:L('Текстом или голосом. Главное он сохранит в твоей карте.','By text or voice. It keeps what matters in your map.'),
+      btn:L('Начать бесплатно · ссылка в профиле','Start free · link in bio')}
+  ]
+},
+{
+  name:L('Серия «Переписка»','Series “Conversation”'),
+  why:L('Вся карусель — диалог с iXo. Показывает сам продукт. Гипотеза: самые тёплые переходы. Реплики здесь придуманы — в бой нужны настоящие ответы iXo.',
+        'The whole carousel is a chat with iXo. Shows the product itself. Hypothesis: the warmest clicks. Lines here are illustrative — real iXo replies needed before posting.'),
+  tag:L('Переписка','Conversation'),
+  slides:[
+    {t:'cover',kicker:L('Разговор','A conversation'),
+      title:L('«Мне 34, и я <em>не знаю</em>, чем хочу заниматься»','“I’m 34 and I <em>don’t know</em> what I want to do”'),
+      sub:L('Что на это отвечает iXo →','What iXo says back →')},
+    {t:'chat',q:L('Мне 34, и я не знаю, чем хочу заниматься.','I’m 34 and I don’t know what I want to do.'),
+      a:L('Давай без спешки. Что в последний раз увлекло тебя так, что ты забыл про время?','No rush. When did you last lose track of time doing something?')},
+    {t:'chat',q:L('Наверное, когда помогал другу с его проектом.','Probably when I helped a friend with his project.'),
+      a:L('Что там было твоим — идеи, организация или люди?','What part felt like yours — the ideas, the organising, or the people?')},
+    {t:'chat',q:L('Люди. Мне нравилось их собирать.','The people. I liked bringing them together.'),
+      a:L('Тогда первый шаг: вспомни три случая, где ты это уже делал. Запишем?','Then a first step: recall three times you’ve done that before. Shall we note them?')},
+    {t:'big',kicker:L('Заметь','Notice'),
+      title:L('Ни одного совета. Только <em>вопросы</em>.','Not one piece of advice. Only <em>questions</em>.'),
+      sub:L('Ответ уже был у него. Его нужно было достать.','The answer was already there. It just had to be found.')},
+    {t:'cta',title:L('Какой вопрос<br>ты задашь<br><em>первым</em>?','What will<br>you ask<br><em>first</em>?'),
+      sub:L('iXo — личный AI-коуч. Текстом или голосом.','iXo — your personal AI coach. By text or voice.'),
+      btn:L('Ссылка в профиле','Link in bio')}
+  ]
+},
+{
+  name:L('Серия «20 сфер»','Series “20 areas”'),skin:'light',
+  why:L('Сериал: одна сфера жизни — одна карусель, всего двадцать. Гипотеза: подписки ради продолжения.','A serial: one life area per carousel, twenty in total. Hypothesis: follows for the next episode.'),
+  tag:L('20 сфер · Финансы','20 areas · Finances'),
+  slides:[
+    {t:'cover',kicker:L('Сфера 4 из 20 · Финансы','Area 4 of 20 · Finances'),
+      title:L('Деньги — тема, о которой ты <em>молчишь</em> даже с собой','Money — the topic you <em>avoid</em> even with yourself'),
+      sub:L('Три вопроса, чтобы начать →','Three questions to begin →')},
+    {t:'big',num:'01',kicker:L('Вопрос 1','Question 1'),
+      title:L('Сколько мне <em>на самом деле</em> нужно в месяц?','How much do I <em>actually</em> need a month?'),
+      sub:L('Не «хотелось бы», а точная цифра.','Not “would be nice”. An exact number.')},
+    {t:'big',num:'02',kicker:L('Вопрос 2','Question 2'),
+      title:L('На что я трачу, чтобы <em>не думать</em>?','What do I spend on to <em>avoid thinking</em>?'),
+      sub:L('Покупки от усталости, скуки, тревоги.','Purchases out of tiredness, boredom, worry.')},
+    {t:'big',num:'03',kicker:L('Вопрос 3','Question 3'),
+      title:L('Что я сделаю, когда денег станет <em>достаточно</em>?','What will I do once there’s <em>enough</em>?'),
+      sub:L('Если ответа нет — дело не в деньгах.','If there’s no answer, it isn’t about money.')},
+    {t:'cta',title:L('Финансы —<br>одна из<br><em>20 сфер</em>.','Finances —<br>one of<br><em>20 areas</em>.'),
+      sub:L('Посмотри на своей карте, как она связана с остальными.','See on your map how it connects to the rest.'),
+      btn:L('Собрать карту · ссылка в профиле','Build your map · link in bio')}
+  ]
+},
+{
+  name:L('Серия «Вопрос дня»','Series “Question of the day”'),
+  why:L('Всего три слайда. Гипотеза: короткая карусель досматривается чаще и дешевле в производстве.','Just three slides. Hypothesis: short carousels get finished more often and cost less to make.'),
+  tag:L('Вопрос дня','Question of the day'),
+  slides:[
+    {t:'cover',glow:1,kicker:L('Вопрос дня','Question of the day'),
+      title:L('Если бы завтра у тебя было <em>30 свободных минут</em> — на что?','If you had <em>30 free minutes</em> tomorrow — what for?'),
+      sub:L('Ответь себе, потом листай →','Answer, then swipe →')},
+    {t:'big',kicker:L('А теперь честно','Now honestly'),
+      title:L('Почему ты не делаешь этого <em>уже сейчас</em>?','Why aren’t you doing it <em>already</em>?'),
+      sub:L('Обычно дело не во времени.','It’s usually not about time.')},
+    {t:'cta',title:L('Ответь<br>на это<br><em>вслух</em>.','Answer<br>this<br><em>out loud</em>.'),
+      sub:L('iXo выслушает и поможет найти эти 30 минут.','iXo will listen and help you find those 30 minutes.'),
+      btn:L('Начать бесплатно · ссылка в профиле','Start free · link in bio')}
+  ]
+},
+{
+  name:L('Серия «Решение»','Series “Decision”'),skin:'light',
+  why:L('Большой жизненный выбор. Гипотеза: самая платёжеспособная аудитория — люди перед серьёзным решением.','A big life choice. Hypothesis: the highest-intent audience — people facing a serious decision.'),
+  tag:L('Решение','Decision'),
+  slides:[
+    {t:'cover',kicker:L('Сложное решение','A hard decision'),
+      title:L('Уйти с работы или <em>остаться</em>?','Quit the job or <em>stay</em>?'),
+      sub:L('Список «за и против» тут не помогает. Вот что помогает →','A pros-and-cons list won’t help. This will →')},
+    {t:'vs',title:L('Что ты на самом деле сравниваешь','What you’re really comparing'),
+      a:{h:L('Остаться','Stay'),items:[L('Стабильность','Stability'),L('Знакомые люди','Familiar people'),L('Страх пожалеть','Fear of regret')]},
+      b:{h:L('Уйти','Leave'),items:[L('Рост','Growth'),L('Неизвестность','The unknown'),L('Страх застрять','Fear of being stuck')]}},
+    {t:'big',kicker:L('Заметь','Notice'),
+      title:L('С обеих сторон — <em>страх</em>.','There’s <em>fear</em> on both sides.'),
+      sub:L('Значит, выбираешь не между работами, а между страхами.','So you’re choosing between fears, not jobs.')},
+    {t:'chips',kicker:L('Спроси иначе','Ask differently'),title:L('Три вопроса вместо списка','Three questions instead of a list'),
+      items:[L('О чём я пожалею через 5 лет?','What will I regret in 5 years?'),L('Что я узнаю, если попробую?','What will I learn if I try?'),L('Какой шаг можно сделать, не увольняясь?','What step can I take without quitting?')]},
+    {t:'cta',title:L('Не решай<br><em>в одиночку</em>.','Don’t decide<br><em>alone</em>.'),
+      sub:L('Разложи решение с iXo: контекст, приоритет, подход, первый шаг.','Lay it out with iXo: context, priority, approach, first step.'),
+      btn:L('Ссылка в профиле','Link in bio')}
+  ]
+}];
+const IDS=['one-question','life-map','before-after','quiz','myth','checklist','conversation','20-areas','question-of-day','decision'];
+window.IXO_TYPO_SERIES = SERIES.map((c, i) => Object.assign({id: IDS[i]}, c));
+})();
+
+</script>
+<script>
+/* Draws one iXo photo slide as HTML. Needs series.js and slides.css.
+   IXO.slide(series, slide, {lang:'ru'|'en', img:'img-seedream', fmt:'tt'|'ig', theme:'dark'|'light', fx, lazy, logo})
+   fx turns on the glass blur; lazy defers off-screen photos (never for PNG export, the shot would come out empty). */
+(function () {
+const CTA = {ru:'Ссылка в профиле', en:'Link in bio'};
+const TAB_STEP = {tt:[36, 98], ig:[34, 80]};  // each tab sits right and below the previous one, like a pile
+const MARK = 'ixo.svg';
+
+function render(series, s, o) {
+  const t = v => v == null ? '' : typeof v === 'string' ? v : v[o.lang] ?? v.ru;
+  const fmt = o.fmt || 'tt';
+  const cls = ['slide', fmt === 'ig' ? 'ig' : '', o.theme === 'light' ? 'light' : '', o.fx ? 'fx' : ''].filter(Boolean).join(' ');
+  const z = s.zoom || 1, pos = s.pos || '50% 30%';
+  // The standalone file embeds every photo once as a CSS class (IXO_CSS_PHOTOS), so slides use divs there
+  const css = window.IXO_CSS_PHOTOS;
+  const src = `${o.img}/${series.id}/${s.photo}.jpg`;
+  const mark = css ? '<span class="mark mk" role="img" aria-label="iXo"></span>' : `<img class="mark" src="${o.logo || MARK}" alt="iXo">`;
+  // flip mirrors the shot so the face sits opposite the text or tabs
+  const move = origin => `transform:scale(${s.flip ? -z : z},${z});transform-origin:${origin}`;
+  const shot = origin => css
+    ? `<div class="photo ph-${series.id}-${s.photo}" style="background-position:${pos};${move(origin)}"></div>`
+    : `<img class="photo" src="${src}" alt=""${o.lazy ? ' loading="lazy" decoding="async"' : ''} style="object-position:${pos};${move(origin)}">`;
+
+  if (s.final) return `<div class="${cls}">${shot('50% 0')}<div class="scrim" style="opacity:.5"></div>${mark}
+    <div class="sheet"><h1>${t(s.h)}</h1><div class="sub">${t(s.sub)}</div>
+    <div class="cta"><b></b>${t(s.cta) || CTA[o.lang]}</div></div><div class="grain"></div></div>`;
+
+  let panel = '';
+  if (s.list) panel = `<div class="panel">${s.list.items.map((it, i) => {
+      const k = s.list.keys === 'num' ? (s.list.from || 1) + i : s.list.keys === 'abc' ? 'ABCD'[i] : '';
+      return `<div class="row${s.list.on === i ? ' on' : ''}">${k !== '' ? `<span class="k">${k}</span>` : ''}${t(it)}</div>`;
+    }).join('')}</div>`;
+  if (s.bars) {
+    const max = Math.max(...s.bars.rows.map(r => r[1]));
+    panel = `<div class="panel">${s.bars.rows.map(([name, n], i) =>
+      `<div class="bar${s.bars.hot === i ? ' hot' : ''}"><div class="t"><span>${t(name)}</span><b>${n}</b></div>`
+      + `<div class="track"><div class="fill" style="width:${n / max * 100}%"></div></div></div>`).join('')}</div>`;
+  }
+  if (s.vs) panel = `<div class="vs${s.vs.every(c => c[2] < 0) ? ' all' : ''}">${s.vs.map(([head, items, on]) =>
+      `<div class="panel"><h3>${t(head)}</h3>${items.map((it, i) => `<p class="${i === on ? 'on' : ''}">${t(it)}</p>`).join('')}</div>`).join('')}</div>`;
+
+  let body = '';
+  if (s.tabs) {
+    const [dx, dy] = TAB_STEP[fmt];
+    const tabs = s.tabs.map(t).concat(s.more ? [t(s.more)] : []);
+    body += `<div class="tabs">${tabs.map((label, i) => {
+      const more = s.more && i === s.tabs.length;
+      return `<div class="tab${more ? ' more' : ''}" style="left:${i * dx}px;top:${i * dy}px">${label}${more ? '' : '<i>×</i>'}</div>`;
+    }).join('')}</div>`;
+  }
+  if (s.chat) body += `<div class="chat">${s.chat.map(([who, text]) =>
+      `<div class="msg ${who}">${who === 'ixo' ? '<div class="who">iXo</div>' : ''}${t(text)}</div>`).join('')}</div>`;
+  if (s.h) {
+    const h = t(s.h), long = s.size === 'l' || h.replace(/<[^>]+>|&nbsp;/g, ' ').length > 44;
+    body += `<div class="copy">${s.label ? `<div class="label">${t(s.label)}</div>` : ''}`
+      + `<h1${panel ? ' class="m"' : long ? ' class="l"' : ''}>${h}</h1>${s.sub ? `<div class="sub">${t(s.sub)}</div>` : ''}${panel}</div>`;
+  }
+  return `<div class="${cls}${panel ? ' tall' : ''}">${shot(s.flip ? '50% 50%' : pos)}`
+    + (s.dim ? `<div class="dim" style="--d:${s.dim}"></div>` : '')
+    + `<div class="scrim"></div>${mark}${body}<div class="grain"></div></div>`;
+}
+
+window.IXO = Object.assign(window.IXO || {}, {slide: render});
+})();
+
+</script>
+<script>
+/* Text-only iXo slides, the look of the Mac mockup (carousels.html). Needs typo.css.
+   IXO.typoSeries(photoSeries) gives the text-only version of a theme: the hand-made one from
+   typo-series.js when it exists, otherwise one derived from the photo slides.
+   IXO.typo(series, index, {lang, fmt:'tt'|'ig', theme:'dark'|'light'}) draws one slide. */
+(function () {
+const CHAOS_POS = [[20,10,-6],[470,90,4],[120,210,3],[560,300,-5],[40,400,5],[430,500,-3],[150,620,-4],[600,660,6]];
+const BTN = {ru:'Ссылка в профиле', en:'Link in bio'};
+const made = Object.fromEntries((window.IXO_TYPO_SERIES || []).map(s => [s.id, s]));
+
+/* Photo slide -> text-only slide, for themes that were only made with photos */
+function derive(ps) {
+  const plain = v => v && Object.fromEntries(Object.entries(v).map(([k, t]) => [k, t.replace(/<br>/g, ' ')]));
+  const slides = ps.slides.map((s, i) => {
+    if (s.final) return {t:'cta', title:s.h, sub:s.sub, btn:BTN};
+    if (s.chat) return {t:'chat', q:s.chat[0][1], a:s.chat[1][1]};
+    if (s.tabs) return {t:'chaos', items:s.tabs};
+    if (s.bars) return {t:'map', title:s.h, rows:s.bars.rows, hot:[s.bars.hot]};
+    if (s.vs) return {t:'vs', title:s.h, a:{h:s.vs[0][0], items:s.vs[0][1], on:s.vs[0][2]}, b:{h:s.vs[1][0], items:s.vs[1][1], on:s.vs[1][2]}};
+    if (s.list) return {t:'chips', kicker:s.label, title:s.h, on:s.list.on,
+      items:s.list.items.map((it, k) => s.list.keys === 'num' ? Object.fromEntries(Object.entries(it).map(([l, v]) => [l, `${(s.list.from || 1) + k} · ${v}`]))
+                                       : s.list.keys === 'abc' ? Object.fromEntries(Object.entries(it).map(([l, v]) => [l, `${'ABCD'[k]} · ${v}`])) : it)};
+    return {t:i === 0 ? 'cover' : 'big', glow:i === 0 ? 1 : 0, kicker:s.label, title:plain(s.h), sub:s.sub, size:s.size};
+  });
+  return {id:ps.id, tag:ps.name, slides};
+}
+
+function typoSeries(ps) { return made[ps.id] || derive(ps); }
+
+function draw(series, i, o) {
+  const x = v => v == null ? '' : typeof v === 'string' ? v : v[o.lang] ?? v.ru;
+  const s = series.slides[i], n = series.slides.length, last = i === n - 1;
+  const kicker = s.kicker ? `<div class="kicker">${x(s.kicker)}</div>` : '';
+  const num = s.num ? `<div class="num">${s.num}</div>` : '';
+  const long = s.size === 'l' || x(s.title).replace(/<[^>]+>|&nbsp;/g, ' ').length > 40;
+  let body = '';
+  switch (s.t) {
+    case 'cover': case 'big':
+      body = `${num}${kicker}<div class="title${long ? ' l' : ''}">${x(s.title)}</div>${s.sub ? `<div class="sub">${x(s.sub)}</div>` : ''}`; break;
+    case 'chips':
+      body = `${num}${kicker}<div class="title m">${x(s.title)}</div><div class="chips">${s.items.map((it, k) =>
+        `<div class="chip${s.on === k ? ' on' : ''}">${x(it)}</div>`).join('')}</div>`; break;
+    case 'map': {
+      const max = Math.max(...s.rows.map(r => r[1]), 1);
+      body = `<div class="title m">${x(s.title)}</div><div class="bars">${s.rows.map(([name, v], k) =>
+        `<div class="bar${s.hot.includes(k) ? ' hot' : ''}"><span>${x(name)}</span><div class="track"><div class="fill" style="width:${v / max * 100}%"></div></div><b>${v}</b></div>`).join('')}</div>`;
+      break;
+    }
+    case 'chaos':
+      body = `<div class="chaos">${s.items.slice(0, CHAOS_POS.length).map((it, k) => {
+        const [l, t, r] = CHAOS_POS[k];
+        return `<span style="left:${l}px;top:${t}px;transform:rotate(${r}deg)">${x(it)}</span>`;
+      }).join('')}</div>`; break;
+    case 'vs':  // hand-made comparisons highlight the last row; derived ones say which
+      body = `<div class="title m">${x(s.title)}</div><div class="vs">${[s.a, s.b].map(c =>
+        `<div><h4>${x(c.h)}</h4>${c.items.map((it, k) =>
+          `<p class="${(c.on ?? c.items.length - 1) === k ? 'on' : ''}">${x(it)}</p>`).join('')}</div>`).join('')}</div>`; break;
+    case 'chat':
+      body = `<div class="bubble me">${x(s.q)}</div><div class="bubble ixo"><small>iXo</small>${x(s.a)}</div>`; break;
+    case 'cta':
+      body = `<div class="title">${x(s.title)}</div><div class="sub">${x(s.sub)}</div><div class="btn">${x(s.btn)}</div>`; break;
+  }
+  const cls = ['ts', o.fmt === 'tt' ? 'tt' : '', s.t === 'cta' ? 'cta' : '', s.glow ? 'glow' : '', o.theme === 'light' ? 'light' : ''].filter(Boolean).join(' ');
+  const pad = v => String(v).padStart(2, '0');
+  return `<div class="${cls}"><header><span class="logo">i<i>X</i>o</span><span>${pad(i + 1)} / ${pad(n)}</span></header>
+    <main>${body}</main>
+    <footer><span>${last ? 'ixo.chat' : x(series.tag)}</span>${last ? '' : '<span class="next">→</span>'}</footer></div>`;
+}
+
+window.IXO = Object.assign(window.IXO || {}, {typo:draw, typoSeries});
+})();
+
+</script>
+<script>
+(function () {
+const UI = {
+  brand:{ru:'Карусели', en:'Carousels'},
+  sPhoto:{ru:'С героями', en:'With heroes'}, sTypo:{ru:'Без персонажей', en:'Text only'}, sBoth:{ru:'Оба', en:'Both'},
+  dark:{ru:'Тёмные', en:'Dark'}, light:{ru:'Светлые', en:'Light'},
+  title:{ru:n => `${n.themes} тем в ${n.branches} направлениях.<br><b>${n.carousels} ${plural(n.carousels, 'готовая карусель', 'готовые карусели', 'готовых каруселей')}.</b>`,
+         en:n => `${n.themes} themes in ${n.branches} branches.<br><b>${n.carousels} carousels ready to post.</b>`},
+  lead:{ru:'Каждая тема сделана в двух стилях: с героем на живых фото и без персонажей, на чистой типографике. У каждой своя задача: охват, комментарии, сохранения или переходы на сайт. Переключите стиль, язык, формат и оформление сверху. Нажмите на слайд, чтобы листать его на весь экран.',
+        en:'Every theme comes in two styles: with a hero in real-life photos, and text only in clean typography. Each has its own job: reach, comments, saves or site visits. Switch style, language, format and look at the top. Tap a slide to page through it full screen.'},
+  r0:{ru:'Два стиля одной темы: можно проверить, что работает лучше — люди или слова.', en:'Two styles of one theme, to test what works better: people or words.'},
+  r1:{ru:'С героем: один человек на карусель, каждый слайд — новый кадр его истории.', en:'With a hero: one person per carousel, every slide a new shot of their story.'},
+  r2:{ru:'Текст держится вне зон интерфейса TikTok.', en:'Text stays clear of TikTok’s interface.'},
+  r3:{ru:'Жёлтым говорит iXo: ответы в переписке, карта, финал.', en:'iXo speaks in yellow: chat replies, the map, the final slide.'},
+  r4:{ru:'Последний слайд — жёлтый, с призывом и ссылкой в профиле.', en:'The last slide is yellow, with the call to action and the link in bio.'},
+  note:{ru:'Фото созданы ИИ, люди на них вымышленные.', en:'Photos are AI-generated; the people in them are fictional.'},
+  foot:{ru:'iXo — личный AI-коуч, ixo.chat. Макеты каруселей для TikTok и Instagram.', en:'iXo is a personal AI coach, ixo.chat. Carousel layouts for TikTok and Instagram.'},
+  themes:{ru:n => `${n} ${plural(n, 'тема', 'темы', 'тем')}`, en:n => `${n} ${n === 1 ? 'theme' : 'themes'}`},
+  slides:{ru:n => `${n} ${plural(n, 'слайд', 'слайда', 'слайдов')}`, en:n => `${n} slides`},
+  goal:{ru:'Цель', en:'Goal'},
+};
+const GOALS = {
+  reach:{ru:'Охват', en:'Reach'}, comments:{ru:'Комментарии', en:'Comments'}, saves:{ru:'Сохранения', en:'Saves'},
+  shares:{ru:'Репосты', en:'Shares'}, clicks:{ru:'Переходы на сайт', en:'Site visits'}, follows:{ru:'Подписки', en:'Follows'},
+};
+function plural(n, one, few, many) {
+  const a = n % 10, b = n % 100;
+  return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many;
+}
+const store = {
+  get(k, d) { try { return localStorage.getItem('ixo-' + k) || d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('ixo-' + k, v); } catch (e) {} },
+};
+const state = {lang:store.get('lang', 'ru'), fmt:store.get('fmt', 'tt'), theme:store.get('theme', 'dark'), style:store.get('style', 'both')};
+const $ = s => document.querySelector(s);
+const byId = Object.fromEntries(IXO_SERIES.map(s => [s.id, s]));
+const typoOf = Object.fromEntries(IXO_SERIES.map(s => [s.id, IXO.typoSeries(s)]));
+// The order themes appear in, so the viewer can run on from one theme to the next
+const ORDER = IXO_BRANCHES.flatMap(b => b.themes);
+
+function draw(id, style, i, extra) {
+  const o = {lang:state.lang, fmt:state.fmt, theme:state.theme, img:'img', logo:'ixo.svg', lazy:true, ...extra};
+  return style === 'photo' ? IXO.slide(byId[id], byId[id].slides[i], o) : IXO.typo(typoOf[id], i, o);
+}
+const count = (id, style) => (style === 'photo' ? byId[id] : typoOf[id]).slides.length;
+
+function seg(id, key) {
+  $(id).querySelectorAll('button').forEach(b => {
+    b.setAttribute('aria-pressed', String(b.dataset.v === state[key]));
+    b.onclick = () => { state[key] = b.dataset.v; store.set(key, b.dataset.v); render(); };
+  });
+}
+function strip(id, style) {
+  const n = count(id, style), name = byId[id].name[state.lang];
+  return `<div><p class="cap">${UI[style === 'photo' ? 'sPhoto' : 'sTypo'][state.lang]}<span>${UI.slides[state.lang](n)}</span></p>
+    <div class="strip" role="list">${Array.from({length:n}, (_, i) =>
+      `<button type="button" class="frame" role="listitem" data-id="${id}" data-style="${style}" data-i="${i}" aria-label="${name}, ${i + 1}/${n}">`
+      + draw(id, style, i) + `<span class="num">${i + 1}/${n}</span></button>`).join('')}</div></div>`;
+}
+function branches() {
+  const L = state.lang, styles = state.style === 'both' ? ['photo', 'typo'] : [state.style];
+  $('#nav').innerHTML = IXO_BRANCHES.map(b => `<a href="#${b.id}">${b.name[L]}<span class="n">${b.themes.length}</span></a>`).join('');
+  $('#branches').innerHTML = IXO_BRANCHES.map((b, bi) => `
+    <section class="branch" id="${b.id}">
+      <div class="bhead">
+        <div><div class="k">${String(bi + 1).padStart(2, '0')} / ${String(IXO_BRANCHES.length).padStart(2, '0')} · ${UI.themes[L](b.themes.length)}</div><h2>${b.name[L]}</h2></div>
+        <p>${b.desc[L]}</p>
+      </div>
+      ${b.themes.map(id => { const s = byId[id]; return `
+      <article class="theme" id="${id}">
+        <div class="meta">
+          <span class="pill">${UI.goal[L]}: ${GOALS[s.goal][L]}</span>
+          <h3>${s.name[L]}</h3>
+          <p class="why">${s.why[L]}</p>
+          <p class="ixo">${s.ixo[L]}</p>
+        </div>
+        <div class="strips">${styles.map(st => strip(id, st)).join('')}</div>
+      </article>`; }).join('')}
+    </section>`).join('');
+  document.querySelectorAll('.frame').forEach(f => f.onclick = () => open(f.dataset.id, f.dataset.style, +f.dataset.i));
+  fit();
+}
+function fit() {
+  const f = document.querySelector('.frame');
+  if (f) document.body.style.setProperty('--k', f.clientWidth / 1080);
+  const v = $('#vframe');
+  if (!$('#viewer').hidden) v.style.setProperty('--k', v.clientWidth / 1080);
+}
+function render() {
+  document.documentElement.lang = state.lang;
+  document.body.classList.toggle('ig', state.fmt === 'ig');
+  document.body.classList.toggle('both', state.style === 'both');
+  seg('#seg-style', 'style'); seg('#seg-lang', 'lang'); seg('#seg-fmt', 'fmt'); seg('#seg-theme', 'theme');
+  document.querySelectorAll('[data-t]').forEach(el => el.innerHTML = UI[el.dataset.t][state.lang]);
+  const slides = IXO_SERIES.reduce((n, s) => n + s.slides.length + typoOf[s.id].slides.length, 0);
+  $('#title').innerHTML = UI.title[state.lang]({themes:IXO_SERIES.length, branches:IXO_BRANCHES.length, carousels:IXO_SERIES.length * 2, slides});
+  branches();
+  if (!$('#viewer').hidden) show();
+}
+
+/* Highlight the branch in view */
+if ('IntersectionObserver' in window) {
+  const seen = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) document.querySelectorAll('.nav a').forEach(a => a.classList.toggle('on', a.hash === '#' + e.target.id));
+  }), {rootMargin:'-40% 0px -55% 0px'});
+  new MutationObserver(() => document.querySelectorAll('.branch').forEach(b => seen.observe(b))).observe($('#branches'), {childList:true});
+}
+
+/* Viewer: pages through one style, running on into the next theme */
+let cur = {id:ORDER[0], style:'photo', i:0}, last = null;
+function open(id, style, i) { cur = {id, style, i}; last = document.activeElement; $('#viewer').hidden = false; document.body.style.overflow = 'hidden'; show(); $('#vclose').focus(); }
+function close() { $('#viewer').hidden = true; document.body.style.overflow = ''; if (last) last.focus(); }
+function step(d) {
+  const n = count(cur.id, cur.style), k = ORDER.indexOf(cur.id);
+  if (cur.i + d >= 0 && cur.i + d < n) cur.i += d;
+  else if (d > 0 && k < ORDER.length - 1) cur = {...cur, id:ORDER[k + 1], i:0};
+  else if (d < 0 && k > 0) cur = {...cur, id:ORDER[k - 1], i:count(ORDER[k - 1], cur.style) - 1};
+  show();
+}
+function show() {
+  const n = count(cur.id, cur.style);
+  $('#vname').textContent = `${byId[cur.id].name[state.lang]} · ${UI[cur.style === 'photo' ? 'sPhoto' : 'sTypo'][state.lang]}`;
+  $('#vpos').textContent = `${cur.i + 1} / ${n}`;
+  $('#vframe').innerHTML = draw(cur.id, cur.style, cur.i, {lazy:false, fx:true});
+  $('#vdots').innerHTML = Array.from({length:n}, (_, i) => `<i class="${i === cur.i ? 'on' : ''}"></i>`).join('');
+  requestAnimationFrame(fit);
+}
+$('#vclose').onclick = close;
+$('#vprev').onclick = () => step(-1);
+$('#vnext').onclick = () => step(1);
+$('#viewer').addEventListener('click', e => { if (e.target.id === 'viewer') close(); });
+document.addEventListener('keydown', e => {
+  if ($('#viewer').hidden) return;
+  if (e.key === 'Escape') close();
+  if (e.key === 'ArrowRight') step(1);
+  if (e.key === 'ArrowLeft') step(-1);
+});
+let x0 = null;
+$('#vframe').addEventListener('touchstart', e => x0 = e.touches[0].clientX, {passive:true});
+$('#vframe').addEventListener('touchend', e => {
+  if (x0 === null) return;
+  const dx = e.changedTouches[0].clientX - x0; x0 = null;
+  if (Math.abs(dx) > 40) step(dx < 0 ? 1 : -1); else step(1);
+});
+$('#vframe').addEventListener('click', e => { if (!('ontouchstart' in window)) step(e.offsetX > e.currentTarget.clientWidth / 2 ? 1 : -1); });
+addEventListener('resize', fit);
+if ('ResizeObserver' in window) new ResizeObserver(fit).observe(document.body);
+
+render();
+if (location.hash.length > 1) { const t = document.getElementById(location.hash.slice(1)); if (t) t.scrollIntoView(); }
+})();
+</script>
+</body></html>
